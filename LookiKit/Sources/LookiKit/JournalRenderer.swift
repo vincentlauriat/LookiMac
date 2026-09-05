@@ -2,7 +2,7 @@ import Foundation
 
 /// Renders a day's moments as the Markdown journal format used by Looki pour Mac.
 public enum JournalRenderer {
-    public static func render(day: DayKey, moments input: [Moment], generatedAt: Date, locale: Locale = Locale(identifier: "fr_FR")) -> String {
+    public static func render(day: DayKey, moments input: [Moment], journals: [JournalPost] = [], generatedAt: Date, locale: Locale = Locale(identifier: "fr_FR")) -> String {
         let moments = input.sorted { $0.startTime < $1.startTime }
         var out: [String] = []
 
@@ -34,6 +34,21 @@ public enum JournalRenderer {
                 out.append("")
                 out.append(m.description.trimmingCharacters(in: .whitespacesAndNewlines))
                 out.append("")
+            }
+        }
+        let posts = journals.filter { !$0.type.isSystem }.sorted { $0.recordedAt > $1.recordedAt }
+        if !posts.isEmpty {
+            out.append("## Journal Looki")
+            out.append("")
+            for p in posts {
+                out.append("### \(time(p.recordedAt, tz: p.timeZone)) · \(p.type.label) — \(p.headline)")
+                out.append("")
+                if let d = p.description?.trimmingCharacters(in: .whitespacesAndNewlines), !d.isEmpty, d != p.headline {
+                    out.append(d); out.append("")
+                }
+                if let c = p.content?.trimmingCharacters(in: .whitespacesAndNewlines), !c.isEmpty {
+                    out.append(c); out.append("")
+                }
             }
         }
         out.append("---")

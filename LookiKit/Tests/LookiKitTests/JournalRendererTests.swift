@@ -57,4 +57,20 @@ import Foundation
         let dej = md.range(of: "### 12:35")!.lowerBound
         #expect(parc < dej)
     }
+
+    @Test func appendsJournalSectionAndSkipsSystemPosts() throws {
+        let moments = try #require(try LookiJSON.decoder().decode(Envelope<[Moment]>.self, from: Fixture.data("moments-day")).data)
+        let days = try #require(try LookiJSON.decoder().decode(Envelope<JournalPage>.self, from: Fixture.data("journals")).data).items
+        let sept4 = days[1].journals
+        let md = JournalRenderer.render(day: DayKey(year: 2026, month: 9, day: 4), moments: moments, journals: sept4, generatedAt: Date(timeIntervalSince1970: 0))
+        let section = try #require(md.range(of: "## Journal Looki"))
+        let tail = String(md[section.lowerBound...])
+        #expect(tail.contains("### 23:45 · BD — Une journée bien remplie\n\nOn te suit du salon au dîner."))
+        #expect(tail.contains("### 23:40 · Vlog — Entre écrans et pluie"))
+        #expect(tail.contains("### 23:31 · Santé — Daily Health Report\n\nMarche intensive, déficit de 630 kcal."))
+        #expect(!tail.contains("Bienvenue"))
+        #expect(tail.range(of: "23:45")!.lowerBound < tail.range(of: "23:31")!.lowerBound)
+        #expect(tail.hasSuffix("Identifiants des moments : `aaaaaaaa-0000-4000-8000-000000000001`, `aaaaaaaa-0000-4000-8000-000000000002`.*\n"))
+        #expect(!JournalRenderer.render(day: DayKey(year: 2026, month: 9, day: 5), moments: moments, generatedAt: Date(timeIntervalSince1970: 0)).contains("## Journal Looki"))
+    }
 }
