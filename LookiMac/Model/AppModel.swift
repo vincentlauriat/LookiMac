@@ -30,6 +30,9 @@ final class AppModel {
         ThumbnailLoader(cache: cache, freshMoment: { id in
             guard let client else { throw LookiError.missingAPIKey }
             return try await client.moment(id: id)
+        }, freshPost: { id in
+            guard let client else { throw LookiError.missingAPIKey }
+            return try await client.journal(id: id)
         })
     }
 
@@ -165,6 +168,72 @@ final class AppModel {
         }
     }
 
+    // MARK: Journal
+
+    var sidebarMode: SidebarMode = SidebarMode(rawValue: UserDefaults.standard.string(forKey: "sidebarMode") ?? "") ?? .moments {
+        didSet { UserDefaults.standard.set(sidebarMode.rawValue, forKey: "sidebarMode") }
+    }
+    var showSystemPosts: Bool = UserDefaults.standard.bool(forKey: "showSystemPosts") {
+        didSet { UserDefaults.standard.set(showSystemPosts, forKey: "showSystemPosts") }
+    }
+    private(set) var journalDays: [JournalDay] = []
+    private(set) var journalState: JournalState = .idle
+    var selectedPost: JournalPost?
+
+    var visibleJournalDays: [JournalDay] {
+        journalDays.compactMap { day in
+            let posts = showSystemPosts ? day.journals : day.journals.filter { !$0.type.isSystem }
+            return posts.isEmpty ? nil : JournalDay(date: day.date, journals: posts.sorted { $0.recordedAt > $1.recordedAt })
+        }
+    }
+
+    func hasJournal(for day: DayKey) -> Bool {
+        journalDays.contains { $0.date == day && $0.journals.contains { !$0.type.isSystem } }
+    }
+
+    func freshJournal(id: String) async throws -> JournalPost {
+        guard let client else { throw LookiError.missingAPIKey }
+        return try await client.journal(id: id)
+    }
+
+    /// Cache first, then the whole feed from the API (follows has_more, max 20 pages, stops if the cursor is ignored).
+    func loadJournal(force: Bool = false) async {
+        if !force, journalDays.isEmpty {
+            let cachedDays = await cache.journalDays()
+            var days: [JournalDay] = []
+            for d in cachedDays {
+                if let posts = await cache.journals(for: d) { days.append(JournalDay(date: d, journals: posts)) }
+            }
+            if !days.isEmpty { journalDays = days; journalState = .loaded }
+        }
+        if journalDays.isEmpty { journalState = .loading }
+        guard let client else { journalState = .failed(.missingAPIKey); return }
+        do {
+            var collected: [DayKey: [JournalPost]] = [:]
+            var cursor: String? = nil
+            var firstID: String? = nil
+            for _ in 0..<20 {
+                let page = try await client.journals(cursor: cursor)
+                let pageFirst = page.items.first?.journals.first?.id
+                if cursor != nil, pageFirst == firstID { break }          // API ignored the cursor
+                if firstID == nil { firstID = pageFirst }
+                for day in page.items { collected[day.date, default: []] += day.journals }
+                guard page.hasMore, let next = page.nextCursorId, next != cursor else { break }
+                cursor = next
+            }
+            guard !Task.isCancelled else { return }
+            let merged = collected.keys.sorted(by: >).map { JournalDay(date: $0, journals: collected[$0]!) }
+            for day in merged { try? await cache.storeJournals(day.journals, for: day.date) }
+            journalDays = merged
+            journalState = .loaded
+        } catch let e as LookiError {
+            if journalDays.isEmpty { journalState = .failed(e) }
+            else { banner = Banner(text: e.userMessage, isError: true, showsSettings: e == .unauthorized) }
+        } catch {
+            if journalDays.isEmpty { journalState = .failed(.network(error.localizedDescription)) }
+        }
+    }
+
     // MARK: Search
 
     var searchQuery: String = ""
@@ -235,19 +304,21 @@ final class AppModel {
             return
         }
         let moments = dayState.moments
-        guard !moments.isEmpty else {
+        let posts = journalDays.first { $0.date == selectedDay }?.journals ?? []
+        let archivablePosts = posts.filter { !$0.type.isSystem }
+        guard !moments.isEmpty || !archivablePosts.isEmpty else {
             banner = Banner(text: "Rien à archiver pour ce jour.", isError: false, showsSettings: false)
             return
         }
         let day = selectedDay
-        archiveProgress = ArchiveProgress(total: moments.count)
+        archiveProgress = ArchiveProgress(total: moments.count + archivablePosts.count)
         archiveTask = Task {
             let archiver = DayArchiver(client: client)
             // Keep the security scope open for the whole run.
             let ok = root.startAccessingSecurityScopedResource()
             defer { if ok { root.stopAccessingSecurityScopedResource() } }
             do {
-                for try await event in archiver.archive(day: day, moments: moments, into: root) {
+                for try await event in archiver.archive(day: day, moments: moments, journals: posts, into: root) {
                     switch event {
                     case .started(let total): archiveProgress?.total = total
                     case .downloaded(_, let name): archiveProgress?.done += 1; archiveProgress?.lastMessage = name

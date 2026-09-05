@@ -12,14 +12,19 @@ struct RootView: View {
                 .navigationSplitViewColumnWidth(min: 260, ideal: 280, max: 320)
         } content: {
             Group {
-                if model.isSearchMode { SearchResultsView() } else { DayTimelineView() }
+                if model.isSearchMode { SearchResultsView() }
+                else if model.sidebarMode == .journal { JournalFeedView() }
+                else { DayTimelineView() }
             }
             .navigationSplitViewColumnWidth(min: 360, ideal: 420)
         } detail: {
-            if let m = model.selectedMoment {
+            if model.sidebarMode == .journal, !model.isSearchMode, let p = model.selectedPost {
+                JournalPostDetailView(post: p)
+            } else if let m = model.selectedMoment {
                 MomentDetailView(moment: m)
             } else {
-                EmptyStateView(title: "Sélectionne un moment", systemImage: "photo.on.rectangle")
+                EmptyStateView(title: model.sidebarMode == .journal ? "Sélectionne un post" : "Sélectionne un moment",
+                               systemImage: model.sidebarMode == .journal ? "book" : "photo.on.rectangle")
             }
         }
         .searchable(text: $model.searchQuery, placement: .toolbar, prompt: "Rechercher un souvenir…")
@@ -29,7 +34,7 @@ struct RootView: View {
                 Button {
                     model.archiveSelectedDay()
                 } label: { Label("Archiver ce jour", systemImage: "arrow.down.doc") }
-                .disabled(model.isSearchMode || model.dayState.moments.isEmpty || model.isArchiving)
+                .disabled(model.isSearchMode || (model.dayState.moments.isEmpty && !model.hasJournal(for: model.selectedDay)) || model.isArchiving)
                 .help("Télécharge les médias du jour et écrit journal.md dans le dossier d'archive")
 
                 Button { model.openArchiveRoot() } label: { Label("Dossier d'archive", systemImage: "folder") }

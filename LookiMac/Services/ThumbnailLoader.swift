@@ -7,15 +7,18 @@ import LookiKit
 @Observable
 final class ThumbnailLoader {
     typealias FreshMoment = @Sendable (String) async throws -> Moment
+    typealias FreshPost = @Sendable (String) async throws -> JournalPost
 
     private let cache: MomentCache
     private let freshMoment: FreshMoment
+    private let freshPost: FreshPost
     private let memory = NSCache<NSString, NSImage>()
     private var inFlight: [String: Task<NSImage?, Never>] = [:]
 
-    init(cache: MomentCache, freshMoment: @escaping FreshMoment) {
+    init(cache: MomentCache, freshMoment: @escaping FreshMoment, freshPost: @escaping FreshPost) {
         self.cache = cache
         self.freshMoment = freshMoment
+        self.freshPost = freshPost
         memory.countLimit = 400
     }
 
@@ -31,6 +34,26 @@ final class ThumbnailLoader {
             if url == nil { url = try? await freshMoment(moment.id).coverFile?.file.temporaryURL }
             guard let url else { return nil }
             guard let jpeg = await Self.makeJPEG(from: url, mediaType: file.file.mediaType) else { return nil }
+            try? await cache.storeThumbnail(jpeg, for: key)
+            return NSImage(data: jpeg)
+        }
+        inFlight[key] = task
+        let result = await task.value
+        inFlight[key] = nil
+        if let result { memory.setObject(result, forKey: key as NSString) }
+        return result
+    }
+
+    func image(for post: JournalPost) async -> NSImage? {
+        guard let media = post.primaryMedia else { return nil }
+        let key = "j-\(post.id)"
+        if let img = memory.object(forKey: key as NSString) { return img }
+        if let task = inFlight[key] { return await task.value }
+        let task = Task<NSImage?, Never> { [cache, freshPost] in
+            if let data = await cache.thumbnail(for: key), let img = NSImage(data: data) { return img }
+            var file = media.thumbnail ?? media.source
+            if file.temporaryURL == nil, let fresh = try? await freshPost(post.id), let m = fresh.primaryMedia { file = m.thumbnail ?? m.source }
+            guard let url = file.temporaryURL, let jpeg = await Self.makeJPEG(from: url, mediaType: file.mediaType) else { return nil }
             try? await cache.storeThumbnail(jpeg, for: key)
             return NSImage(data: jpeg)
         }
