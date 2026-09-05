@@ -144,8 +144,9 @@ final class AppModel {
         monthTask = Task { await refreshMonthMarks() }
     }
 
-    /// Marks from the cache immediately; then fetches any day of the month not yet cached,
-    /// oldest first, never beyond today, one request at a time.
+    /// Marks from the cache immediately, then one `/moments/calendar` call for the whole month
+    /// (and one `/journals/calendar` call for the Journal mode). Cached counts win over the
+    /// calendar's presence flag; days the calendar does not list are marked empty.
     func refreshMonthMarks() async {
         let (year, month) = visibleMonth
         monthMarks = await cache.fetchedDays(year: year, month: month)
@@ -154,19 +155,29 @@ final class AppModel {
         var cal = Calendar(identifier: .gregorian); cal.timeZone = localTimeZone
         let first = DayKey(year: year, month: month, day: 1)
         let count = cal.range(of: .day, in: .month, for: first.date(in: localTimeZone))!.count
-        for d in 1...count {
-            let key = DayKey(year: year, month: month, day: d)
-            if key > today || monthMarks[key] != nil { continue }
-            if Task.isCancelled || visibleMonth != (year, month) { return }
-            do {
-                let moments = try await client.moments(on: key)
-                try? await cache.store(moments, for: key)
-                monthMarks[key] = moments.count
-            } catch {
-                return   // stop scanning on the first error; the day view reports it when selected
+        let last = min(DayKey(year: year, month: month, day: count), today)
+        guard first <= last else { return }
+        do {
+            let days = try await client.momentCalendar(start: first, end: last)
+            guard !Task.isCancelled, visibleMonth == (year, month) else { return }
+            let present = Set(days.filter { $0.highlightMoment != nil }.map(\.date))
+            for d in 1...count {
+                let key = DayKey(year: year, month: month, day: d)
+                if key > today || monthMarks[key] != nil { continue }
+                monthMarks[key] = present.contains(key) ? 1 : 0
             }
+        } catch {
+            // The day view reports the error when a day is selected; marks simply stay unknown.
         }
+        do {
+            let days = try await client.journalCalendar(start: first, end: last)
+            guard !Task.isCancelled, visibleMonth == (year, month) else { return }
+            journalMarks.formUnion(days.map(\.date))
+        } catch {}
     }
+
+    /// Days known to have journal posts (from `/journals/calendar`); merged with the loaded feed in `hasJournal(for:)`.
+    private(set) var journalMarks: Set<DayKey> = []
 
     // MARK: Journal
 
@@ -188,7 +199,13 @@ final class AppModel {
     }
 
     func hasJournal(for day: DayKey) -> Bool {
-        journalDays.contains { $0.date == day && $0.journals.contains { !$0.type.isSystem } }
+        journalMarks.contains(day) || journalDays.contains { $0.date == day && $0.journals.contains { !$0.type.isSystem } }
+    }
+
+    /// Every clip of a moment, freshly signed (URLs valid about an hour).
+    func clips(of momentID: String) async throws -> [MomentFile] {
+        guard let client else { throw LookiError.missingAPIKey }
+        return try await client.allMomentFiles(id: momentID)
     }
 
     func freshJournal(id: String) async throws -> JournalPost {
@@ -213,7 +230,7 @@ final class AppModel {
             var cursor: String? = nil
             var firstID: String? = nil
             for _ in 0..<20 {
-                let page = try await client.journals(cursor: cursor)
+                let page = try await client.journals(cursorDate: cursor)
                 let pageFirst = page.items.first?.journals.first?.id
                 if cursor != nil, pageFirst == firstID { break }          // API ignored the cursor
                 if firstID == nil { firstID = pageFirst }
@@ -325,6 +342,7 @@ final class AppModel {
                     case .skipped(_, let reason): archiveProgress?.done += 1; archiveProgress?.skipped += 1; archiveProgress?.lastMessage = reason
                     case .wroteJournal: archiveProgress?.lastMessage = "journal.md"
                     case .finished(let folder): archiveProgress?.folder = folder; archiveProgress?.finished = true
+                    case .expanded(let additional): archiveProgress?.total += additional
                     }
                 }
             } catch is CancellationError {

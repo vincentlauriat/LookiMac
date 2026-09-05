@@ -79,9 +79,17 @@ struct CalendarSidebarView: View {
             ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 32) }
             ForEach(1...days, id: \.self) { d in
                 let key = DayKey(year: model.visibleMonth.year, month: model.visibleMonth.month, day: d)
-                DayCell(day: d, count: model.monthMarks[key], isSelected: key == model.selectedDay, isFuture: key > today)
+                DayCell(day: d, count: markCount(for: key), isSelected: key == model.selectedDay, isFuture: key > today)
                     .onTapGesture { if key <= today { model.select(day: key) } }
             }
+        }
+    }
+
+    /// Moments mode: number of moments (nil = unknown). Journal mode: 1 when the day has posts, 0 otherwise.
+    private func markCount(for key: DayKey) -> Int? {
+        switch model.sidebarMode {
+        case .moments: return model.monthMarks[key]
+        case .journal: return model.hasJournal(for: key) ? 1 : 0
         }
     }
 

@@ -64,6 +64,25 @@ final class ThumbnailLoader {
         return result
     }
 
+    /// Thumbnail of one clip: the API preview when present, else a frame/downscale of the clip itself.
+    func image(for clip: MomentFile) async -> NSImage? {
+        let key = "c-\(clip.id)"
+        if let img = memory.object(forKey: key as NSString) { return img }
+        if let task = inFlight[key] { return await task.value }
+        let task = Task<NSImage?, Never> { [cache] in
+            if let data = await cache.thumbnail(for: key), let img = NSImage(data: data) { return img }
+            let file = clip.thumbnail?.temporaryURL != nil ? clip.thumbnail! : clip.file
+            guard let url = file.temporaryURL, let jpeg = await Self.makeJPEG(from: url, mediaType: file.mediaType) else { return nil }
+            try? await cache.storeThumbnail(jpeg, for: key)
+            return NSImage(data: jpeg)
+        }
+        inFlight[key] = task
+        let result = await task.value
+        inFlight[key] = nil
+        if let result { memory.setObject(result, forKey: key as NSString) }
+        return result
+    }
+
     /// Downloads an image, or grabs a frame of a remote video, and returns JPEG data.
     nonisolated private static func makeJPEG(from url: URL, mediaType: MediaType) async -> Data? {
         let cgImage: CGImage?
