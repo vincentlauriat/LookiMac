@@ -1,0 +1,60 @@
+name: LookiMac
+options:
+  bundleIdPrefix: fr.lauriat
+  deploymentTarget:
+    macOS: "26.0"
+  xcodeVersion: "27.0"
+  generateEmptyDirectories: true
+
+packages:
+  LookiKit:
+    path: LookiKit
+
+schemes:
+  LookiMac:
+    build:
+      targets:
+        LookiMac: all
+    run:
+      config: Debug
+
+targets:
+  LookiMac:
+    type: application
+    platform: macOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: LookiMac
+        excludes:
+          - "**/*.entitlements"
+          - "Info.plist"
+    dependencies:
+      - package: LookiKit
+        product: LookiKit
+    settings:
+      base:
+        PRODUCT_NAME: LookiMac
+        PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.lookimac
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        CODE_SIGN_ENTITLEMENTS: LookiMac/LookiMac.entitlements
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGNING_ALLOWED: NO
+        ENABLE_HARDENED_RUNTIME: YES
+    info:
+      path: LookiMac/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: fr
+        CFBundleName: Looki pour Mac
+        CFBundleDisplayName: Looki pour Mac
+        CFBundleIdentifier: fr.lauriat.lookimac
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "26.0"
+        LSApplicationCategoryType: public.app-category.photography
+        NSHumanReadableCopyright: ""
