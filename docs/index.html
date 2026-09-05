@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Looki pour Mac — Review, search & archive your Looki L1 moments on macOS</title>
+<meta name="description" content="A native macOS app for the Looki L1 wearable camera: calendar of your days, timeline of moments with thumbnails, video playback, semantic search across all memories, and one-click archive of a day to Markdown + media. Free & open-source (MIT), signed & notarized, read-only on Looki.">
+<meta property="og:title" content="Looki pour Mac">
+<meta property="og:description" content="Review, search and archive the moments of your Looki L1 camera — natively on macOS. Free & open-source, no telemetry.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23fb7185'/%3E%3Cg fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='18' y='32' width='64' height='44' rx='9'/%3E%3Cpath d='M36 32l6-10h16l6 10'/%3E%3Ccircle cx='50' cy='54' r='12'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="assets/base.css">
+<style>
+  :root{
+    --bg:#ffffff; --bg-soft:#fdf5f6; --panel:#ffffff; --line:#f1dfe2;
+    --ink:#241a1c; --muted:#6f6063; --faint:#9c8d90;
+    --accent:#fb7185; --accent-deep:#d1405a; --accent-soft:#ffe4e9; --on-accent:#2a0a12; --ok:#1a7f37;
+    --code-bg:#1c1215; --maxw:1100px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--font-mono)}
+
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:saturate(180%) blur(12px);background:rgba(255,255,255,.8);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:-.2px}
+  .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#ff9fb0,#fb7185);display:grid;place-items:center;box-shadow:0 4px 12px rgba(251,113,133,.34)}
+  .logo svg{width:19px;height:19px}
+  .nav-links{display:flex;gap:24px;align-items:center;color:var(--muted);font-size:14.5px}
+  .nav-links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:11px;font-weight:650;font-size:15px;transition:transform .12s ease,box-shadow .12s ease,background .12s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(135deg,#ff8fa3,#fb7185);color:var(--on-accent);box-shadow:0 6px 22px rgba(251,113,133,.34)}
+  .btn-primary:hover{box-shadow:0 10px 28px rgba(251,113,133,.44)}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink);background:#fff}
+  .btn-ghost:hover{border-color:#e6c3ca;background:var(--bg-soft)}
+  .btn-sm{padding:8px 15px;font-size:14px;border-radius:9px}
+
+  header{padding:78px 0 36px;background:
+    radial-gradient(820px 380px at 18% -8%,rgba(251,113,133,.13),transparent 62%),
+    linear-gradient(180deg,#fff8f9,#ffffff 70%)}
+  .hero-grid{display:grid;grid-template-columns:1.02fr 1fr;gap:48px;align-items:center}
+  .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--muted);padding:6px 13px;border-radius:999px;font-size:13px;margin-bottom:22px}
+  .pill b{color:var(--accent-deep)}
+  h1{font-size:clamp(36px,5.4vw,56px);line-height:1.06;font-weight:820;letter-spacing:-1.5px}
+  h1 .grad{background:linear-gradient(120deg,#fb7185,#d1405a);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{max-width:540px;margin:20px 0 0;font-size:clamp(16px,2vw,19px);color:var(--muted)}
+  .cta{display:flex;gap:13px;flex-wrap:wrap;margin:30px 0 14px}
+  .meta{color:var(--faint);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px}
+  .meta b{color:var(--muted);font-weight:600}
+
+  /* app window mock: calendar | timeline | detail */
+  .winwrap{filter:drop-shadow(0 30px 60px rgba(60,10,25,.18))}
+  .win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--bg-soft);border-bottom:1px solid var(--line)}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .titlebar .name{margin-left:8px;font-size:12.5px;color:var(--faint)}
+  .titlebar .name b{color:var(--muted);font-weight:600}
+  .app{display:grid;grid-template-columns:.62fr 1fr 1fr;min-height:320px}
+  .cal{border-right:1px solid var(--line);padding:12px 10px;background:#fdfbfb}
+  .cal .mh{font-size:12px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--ink)}
+  .cal .g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal .g span{font-size:10px;text-align:center;padding:4px 0 6px;border-radius:5px;color:var(--muted);position:relative;font-variant-numeric:tabular-nums}
+  .cal .g span.h::after{content:"";position:absolute;left:50%;bottom:1px;width:4px;height:4px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
+  .cal .g span.sel{background:var(--accent-soft);color:var(--accent-deep);font-weight:700}
+  .cal .g span.f{color:#cfc3c6}
+  .tl{border-right:1px solid var(--line);padding:10px}
+  .tl .dh{font-size:11px;font-weight:700;color:var(--ink);padding:2px 4px 8px}
+  .tl .dh small{display:block;font-weight:500;color:var(--faint);font-size:10px}
+  .mo{display:flex;gap:8px;align-items:flex-start;padding:6px;border-radius:8px}
+  .mo.sel{background:var(--accent-soft)}
+  .th{flex:none;width:42px;height:32px;border-radius:5px;background:linear-gradient(135deg,#c9b8bd,#8d7a80)}
+  .th.a{background:linear-gradient(135deg,#f7b267,#f4845f)}.th.b{background:linear-gradient(135deg,#9fd8cb,#4f9d9d)}.th.c{background:linear-gradient(135deg,#b8c0ff,#7b8cde)}.th.d{background:linear-gradient(135deg,#ffd6a5,#e39774)}
+  .mo .t{font-size:11px;font-weight:650;color:var(--ink);line-height:1.25}
+  .mo .d{font-size:9.5px;color:var(--faint);margin-top:2px;font-variant-numeric:tabular-nums}
+  .det{padding:12px}
+  .vid{height:118px;border-radius:8px;background:radial-gradient(180px 90px at 50% 40%,#5a4046,#2a1c20);display:grid;place-items:center;color:#fff;margin-bottom:10px}
+  .vid span{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);color:#2a1c20;display:grid;place-items:center;font-size:13px;padding-left:3px}
+  .det .t{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .det .m{font-size:10px;color:var(--faint);margin:3px 0 7px}
+  .det .p{font-size:10.5px;color:var(--muted);line-height:1.45}
+
+  section{padding:74px 0;border-top:1px solid var(--line)}
+  .eyebrow{color:var(--accent-deep);font-weight:700;font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase}
+  .center{text-align:center}
+  .center .eyebrow{display:block}
+  h2{font-size:clamp(27px,3.7vw,38px);font-weight:800;letter-spacing:-.7px;margin:9px 0 12px}
+  .lead{color:var(--muted);max-width:640px;font-size:17px}
+  .center .lead{margin-left:auto;margin-right:auto}
+
+  .grid{display:grid;gap:16px;margin-top:42px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:border-color .15s,transform .15s,box-shadow .15s}
+  .card:hover{border-color:#f5c6d0;transform:translateY(-2px);box-shadow:0 12px 30px rgba(60,10,25,.08)}
+  .card h3{font-size:16.5px;margin-bottom:5px;letter-spacing:-.2px}
+  .card p{color:var(--muted);font-size:14.5px}
+  .ico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-deep);font-size:21px;margin-bottom:14px}
+
+  .why{background:var(--bg-soft);border-radius:18px;padding:40px;display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center;margin-top:8px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:18px}
+  .stat .k{font-size:26px;font-weight:820;letter-spacing:-1px;color:var(--accent-deep)}
+  .stat .v{color:var(--muted);font-size:13.5px;margin-top:2px}
+
+  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:14px;margin-top:42px}
+  .node{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center}
+  .node .ni{font-size:24px;margin-bottom:8px}
+  .node h3{font-size:15px;margin-bottom:4px}
+  .node p{color:var(--muted);font-size:13px}
+  .arrow{display:grid;place-items:center;color:var(--accent-deep);font-size:22px;font-weight:800}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:42px;counter-reset:s}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;position:relative}
+  .step::before{counter-increment:s;content:counter(s);position:absolute;top:-14px;left:22px;width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#ff8fa3,#fb7185);color:var(--on-accent);font-weight:800;display:grid;place-items:center;font-size:15px;box-shadow:0 5px 14px rgba(251,113,133,.32)}
+  .step h3{margin:6px 0 5px;font-size:16px}
+  .step p{color:var(--muted);font-size:14.5px}
+  .step code,.note code{background:var(--code-bg);color:#f6e8ec;border-radius:6px;padding:2px 7px;font:12.5px/1.4 var(--font-mono)}
+
+  .tree{margin-top:26px;background:var(--code-bg);color:#f6e8ec;border-radius:14px;padding:20px 24px;font:13px/1.7 var(--font-mono);overflow-x:auto}
+  .tree .c{color:#b89aa2}
+
+  .final{text-align:center;background:radial-gradient(620px 280px at 50% 120%,rgba(251,113,133,.14),transparent 66%)}
+  .final .cta{justify-content:center}
+
+  .note{margin-top:40px;background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:20px 22px;color:var(--muted);font-size:14.5px}
+  .note b{color:var(--ink)}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:14px;text-align:center}
+  footer a{color:var(--accent-deep);font-weight:600}
+  .disclaimer{color:var(--faint);font-size:12.5px;margin-top:8px}
+
+  @media(max-width:880px){
+    .hero-grid{grid-template-columns:1fr;gap:34px}
+    .app{grid-template-columns:1fr 1fr}
+    .cal{display:none}
+    .why{grid-template-columns:1fr;padding:28px}
+    .g3,.steps{grid-template-columns:1fr}
+    .flow{grid-template-columns:1fr}
+    .flow .arrow{transform:rotate(90deg)}
+    .nav-links a:not(.btn){display:none}
+  }
+
+  .langtog{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+  .langtog button{background:transparent;border:0;color:var(--muted);font:600 12.5px/1 var(--font-mono);padding:0 10px;min-height:36px;cursor:pointer}
+  .langtog button+button{border-left:1px solid var(--line)}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--accent);color:var(--on-accent)}
+  @media(max-width:600px){.langtog button{padding:0 7px;font-size:11.5px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#top"><span class="en">Skip to content</span><span class="fr">Aller au contenu</span><span class="zh">跳至內容</span></a>
+
+<nav><div class="wrap">
+  <a class="brand" href="#top"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="32" width="64" height="44" rx="9"/><path d="M36 32l6-10h16l6 10"/><circle cx="50" cy="54" r="12"/></g></svg></span>Looki pour Mac</a>
+  <div class="nav-links">
+    <a href="#features"><span class="en">Features</span><span class="fr">Fonctions</span><span class="zh">功能</span></a>
+    <a href="#why"><span class="en">Why</span><span class="fr">Pourquoi</span><span class="zh">為什麼</span></a>
+    <a href="#archive"><span class="en">Archive</span><span class="fr">Archive</span><span class="zh">封存</span></a>
+    <a href="#install"><span class="en">Install</span><span class="fr">Installer</span><span class="zh">安裝</span></a>
+    <a href="https://github.com/vincentlauriat/LookiMac">GitHub</a>
+    <div class="langtog" role="group" aria-label="Language / Langue / 語言">
+      <button type="button" data-lang="en" class="on" onclick="setLang('en')">EN</button>
+      <button type="button" data-lang="fr" onclick="setLang('fr')">FR</button>
+      <button type="button" data-lang="zh" onclick="setLang('zh')">中文</button>
+    </div>
+    <a class="btn btn-primary btn-sm" href="https://github.com/vincentlauriat/LookiMac/releases/latest"><span class="en">Download</span><span class="fr">Télécharger</span><span class="zh">下載</span></a>
+  </div>
+</div></nav>
+
+<header id="top"><div class="wrap">
+  <div class="hero-grid">
+    <div>
+      <span class="pill">📷 <span class="en">For the <b>Looki L1</b> wearable camera</span><span class="fr">Pour la caméra portable <b>Looki L1</b></span><span class="zh">專為 <b>Looki L1</b> 穿戴式相機打造</span></span>
+      <h1><span class="en">Your Looki moments,<br><span class="grad">native on macOS.</span></span><span class="fr">Vos moments Looki,<br><span class="grad">nativement sur macOS.</span></span><span class="zh">你的 Looki 時刻，<span class="grad">在 macOS 上原生呈現。</span></span></h1>
+      <p class="sub"><span class="en">Pick a day on the calendar, scroll the timeline of moments, play the clip, read what the AI saw. Search all your memories in plain words. Archive any day to your own folder as media plus a Markdown journal.</span><span class="fr">Choisissez un jour sur le calendrier, parcourez la timeline des moments, lisez la vidéo et la description. Cherchez dans tous vos souvenirs en langage naturel. Archivez n'importe quel jour dans votre propre dossier : médias et journal Markdown.</span><span class="zh">在日曆上挑一天，滑動時刻的時間線，播放影片，閱讀 AI 看見的內容。用自然語言搜尋所有記憶。把任何一天封存到你自己的資料夾：媒體加上 Markdown 日誌。</span></p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/vincentlauriat/LookiMac/releases/latest">⬇︎ <span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a>
+        <a class="btn btn-ghost" href="https://github.com/vincentlauriat/LookiMac"><span class="en">View on GitHub</span><span class="fr">Voir sur GitHub</span><span class="zh">在 GitHub 上檢視</span></a>
+      </div>
+      <p class="meta"><span class="en"><b>Free &amp; open-source (MIT)</b> · Signed &amp; notarized · macOS 26+ · Read-only on Looki</span><span class="fr"><b>Gratuite et open source (MIT)</b> · Signée et notarisée · macOS 26+ · Lecture seule sur Looki</span><span class="zh"><b>免費開源（MIT）</b> · 已簽章與公證 · macOS 26+ · 對 Looki 唯讀</span></p>
+    </div>
+
+    <div class="winwrap">
+      <div class="win" role="img" aria-label="Looki pour Mac window: a month calendar with marked days on the left, the day's timeline of moments with thumbnails in the middle, and the selected moment's video and description on the right">
+        <div class="titlebar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="name"><b>Looki pour Mac</b> — <span class="en">Saturday, September 5</span><span class="fr">Samedi 5 septembre</span><span class="zh">9 月 5 日（六）</span></span>
+        </div>
+        <div class="app" aria-hidden="true">
+          <div class="cal">
+            <div class="mh"><span class="en">September 2026</span><span class="fr">Septembre 2026</span><span class="zh">2026 年 9 月</span></div>
+            <div class="g">
+              <span class="h">1</span><span class="h">2</span><span>3</span><span class="h">4</span><span class="sel h">5</span><span class="f">6</span><span class="f">7</span>
+              <span class="f">8</span><span class="f">9</span><span class="f">10</span><span class="f">11</span><span class="f">12</span><span class="f">13</span><span class="f">14</span>
+              <span class="f">15</span><span class="f">16</span><span class="f">17</span><span class="f">18</span><span class="f">19</span><span class="f">20</span><span class="f">21</span>
+            </div>
+          </div>
+          <div class="tl">
+            <div class="dh"><span class="en">Saturday, September 5</span><span class="fr">Samedi 5 septembre</span><span class="zh">9 月 5 日星期六</span><small><span class="en">13 moments</span><span class="fr">13 moments</span><span class="zh">13 個時刻</span></small></div>
+            <div class="mo"><span class="th a"></span><div><div class="t"><span class="en">Walk under the bridges</span><span class="fr">Marche sous les ponts</span><span class="zh">橋下漫步</span></div><div class="d">09:59 – 10:03</div></div></div>
+            <div class="mo"><span class="th b"></span><div><div class="t"><span class="en">Lively chat on the train</span><span class="fr">Conversation dans le train</span><span class="zh">列車上的熱烈交談</span></div><div class="d">10:07 – 10:16</div></div></div>
+            <div class="mo sel"><span class="th c"></span><div><div class="t"><span class="en">Coffee tasting at the fair</span><span class="fr">Dégustation de café au salon</span><span class="zh">展會上的咖啡品嚐</span></div><div class="d">10:35 – 11:00</div></div></div>
+            <div class="mo"><span class="th d"></span><div><div class="t"><span class="en">Tour of the tech stands</span><span class="fr">Tour des stands tech</span><span class="zh">逛科技展位</span></div><div class="d">11:02 – 11:42</div></div></div>
+            <div class="mo"><span class="th"></span><div><div class="t"><span class="en">Lunch and tech debates</span><span class="fr">Déjeuner et débats tech</span><span class="zh">午餐與科技辯論</span></div><div class="d">14:35 – 15:46</div></div></div>
+          </div>
+          <div class="det">
+            <div class="vid"><span>▶</span></div>
+            <div class="t"><span class="en">Coffee tasting at the fair</span><span class="fr">Dégustation de café au salon</span><span class="zh">展會上的咖啡品嚐</span></div>
+            <div class="m">10:35 – 11:00 · 25 min · Messe Berlin</div>
+            <div class="p"><span class="en">Arrival at the trade fair, welcomed by giant billboards. A representative explains a wine cellar, then an automatic coffee machine; the visit ends with espressos in small cups.</span><span class="fr">Arrivée au salon, accueil par des publicités géantes. Un représentant présente une cave à vin puis une machine à café automatique ; la visite se conclut par des espressos.</span><span class="zh">抵達展會，巨型廣告牌迎面而來。展位人員介紹酒櫃，再介紹全自動咖啡機；參觀以幾杯小杯濃縮咖啡收尾。</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></header>
+
+<section id="features"><div class="wrap">
+  <div class="center">
+    <p class="eyebrow"><span class="en">features</span><span class="fr">fonctions</span><span class="zh">功能</span></p>
+    <h2><span class="en">Everything Looki captured — reviewed, searched and kept on your Mac</span><span class="fr">Tout ce que Looki a capturé — revu, cherché et conservé sur votre Mac</span><span class="zh">Looki 拍下的一切——在你的 Mac 上回顧、搜尋、保存</span></h2>
+    <p class="lead"><span class="en">A small, fast SwiftUI app talking to the Looki Open API, read-only. Metadata and thumbnails are cached locally so reopening is instant; videos stream from Looki when you press play.</span><span class="fr">Une app SwiftUI petite et rapide qui parle à l'API ouverte de Looki, en lecture seule. Métadonnées et vignettes sont mises en cache localement pour une réouverture instantanée ; les vidéos sont lues en streaming depuis Looki.</span><span class="zh">小巧快速的 SwiftUI 應用程式，以唯讀方式呼叫 Looki 開放 API。中繼資料與縮圖在本機快取，重新開啟即時可用；影片在按下播放時從 Looki 串流。</span></p>
+  </div>
+  <div class="grid g3">
+    <div class="card"><div class="ico">📅</div><h3><span class="en">Calendar of your days</span><span class="fr">Calendrier de vos journées</span><span class="zh">你的日曆</span></h3><p><span class="en">A month view where every day with moments is marked. Days are fetched once and remembered; browsing back in time stays fluid.</span><span class="fr">Une vue mensuelle où chaque jour contenant des moments est marqué. Les jours sont récupérés une fois puis mémorisés ; remonter le temps reste fluide.</span><span class="zh">月檢視中，每個有時刻的日子都會標記。每一天只抓取一次並記住，往回瀏覽依然流暢。</span></p></div>
+    <div class="card"><div class="ico">🎞️</div><h3><span class="en">Timeline of moments</span><span class="fr">Timeline des moments</span><span class="zh">時刻時間線</span></h3><p><span class="en">Time range, title, place and a real thumbnail pulled from each clip. Video and photo badges tell you what each moment holds.</span><span class="fr">Plage horaire, titre, lieu et une vraie vignette extraite de chaque clip. Des badges vidéo et photo indiquent ce que contient chaque moment.</span><span class="zh">時間範圍、標題、地點，以及從每段影片擷取的真實縮圖。影片與照片標章告訊你每個時刻包含什麼。</span></p></div>
+    <div class="card"><div class="ico">▶️</div><h3><span class="en">Play and read</span><span class="fr">Lire et relire</span><span class="zh">播放與閱讀</span></h3><p><span class="en">Native video playback, the full AI-written description, the address and the duration — all in the detail column, no browser needed.</span><span class="fr">Lecture vidéo native, la description complète rédigée par l'IA, l'adresse et la durée — dans la colonne de détail, sans navigateur.</span><span class="zh">原生影片播放、AI 撰寫的完整描述、地址與時長——全都在詳細欄位裡，不需要瀏覽器。</span></p></div>
+    <div class="card"><div class="ico">🔎</div><h3><span class="en">Semantic search</span><span class="fr">Recherche sémantique</span><span class="zh">語意搜尋</span></h3><p><span class="en">Type "coffee at the fair" or "conversation on the train": Looki's search finds the moments across every day, with pagination as you scroll.</span><span class="fr">Tapez « café au salon » ou « conversation dans le train » : la recherche Looki retrouve les moments sur toutes vos journées, avec pagination au défilement.</span><span class="zh">輸入「展會上的咖啡」或「火車上的對話」：Looki 的搜尋會在所有日子中找出對應時刻，捲動時自動載入更多。</span></p></div>
+    <div class="card"><div class="ico">🗂️</div><h3><span class="en">Archive a day</span><span class="fr">Archiver une journée</span><span class="zh">封存一天</span></h3><p><span class="en">One click downloads the day's media into <b>YYYY/MM/DD/</b> in a folder you choose, plus <b>journal.md</b> and <b>moments.json</b>. Already-saved files are skipped.</span><span class="fr">Un clic télécharge les médias du jour dans <b>AAAA/MM/JJ/</b> du dossier de votre choix, plus <b>journal.md</b> et <b>moments.json</b>. Les fichiers déjà présents sont ignorés.</span><span class="zh">一鍵把當天的媒體下載到你選擇的資料夾中的 <b>YYYY/MM/DD/</b>，並附上 <b>journal.md</b> 與 <b>moments.json</b>。已存在的檔案會自動略過。</span></p></div>
+    <div class="card"><div class="ico">🔒</div><h3><span class="en">Private by design</span><span class="fr">Privée par conception</span><span class="zh">以隱私為設計前提</span></h3><p><span class="en">API key in the macOS Keychain, sandboxed, <b>no telemetry</b>. Signed media links are never written to disk. Nothing leaves your Mac except calls to Looki.</span><span class="fr">Clé API dans le Trousseau macOS, app sandboxée, <b>aucune télémétrie</b>. Les liens médias signés ne sont jamais écrits sur disque. Rien ne quitte votre Mac hormis les appels à Looki.</span><span class="zh">API 金鑰存放於 macOS 鑰匙圈，沙盒化，<b>沒有遙測</b>。已簽章的媒體連結絕不寫入磁碟。除了呼叫 Looki，沒有任何資料離開你的 Mac。</span></p></div>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <div class="why">
+    <div>
+      <p class="eyebrow"><span class="en">why it exists</span><span class="fr">pourquoi elle existe</span><span class="zh">為什麼有這個工具</span></p>
+      <h2 style="text-align:left"><span class="en">Your life log deserves a real window</span><span class="fr">Votre journal de vie mérite une vraie fenêtre</span><span class="zh">你的生活紀錄值得一扇真正的窗</span></h2>
+      <p class="lead"><span class="en">The Looki L1 films short clips all day and turns them into titled, described, geolocated moments. Reviewing them on a phone screen is fine; <b>reading a whole day, searching a year, keeping your own copy</b> calls for a Mac. Looki pour Mac is that window: three columns, a search field, and an archive button.</span><span class="fr">La Looki L1 filme de courts clips toute la journée et les transforme en moments titrés, décrits et géolocalisés. Les revoir sur un téléphone, très bien ; <b>relire une journée entière, chercher dans une année, garder sa propre copie</b> appelle un Mac. Looki pour Mac est cette fenêtre : trois colonnes, un champ de recherche et un bouton d'archive.</span><span class="zh">Looki L1 整天拍攝短片，並把它們變成有標題、有描述、有地點的時刻。在手機上回看很好；但<b>重讀整整一天、搜尋一整年、保留自己的副本</b>，需要一台 Mac。Looki pour Mac 就是那扇窗：三個欄位、一個搜尋框、一個封存按鈕。</span></p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k"><span class="en">Read-only</span><span class="fr">Lecture seule</span><span class="zh">唯讀</span></div><div class="v"><span class="en">Never edits or deletes on Looki</span><span class="fr">Ne modifie ni ne supprime rien chez Looki</span><span class="zh">絕不修改或刪除 Looki 上的資料</span></div></div>
+      <div class="stat"><div class="k"><span class="en">Yours</span><span class="fr">À vous</span><span class="zh">屬於你</span></div><div class="v"><span class="en">Archive lands in a folder you own</span><span class="fr">L'archive va dans un dossier qui vous appartient</span><span class="zh">封存檔放在你自己的資料夾</span></div></div>
+      <div class="stat"><div class="k">39</div><div class="v"><span class="en">Unit tests on the core library</span><span class="fr">Tests unitaires sur le cœur</span><span class="zh">核心程式庫的單元測試</span></div></div>
+      <div class="stat"><div class="k">0</div><div class="v"><span class="en">Trackers &amp; telemetry</span><span class="fr">Traceurs et télémétrie</span><span class="zh">追蹤器與遙測</span></div></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="archive"><div class="wrap">
+  <div class="center">
+    <p class="eyebrow"><span class="en">how it works</span><span class="fr">comment ça marche</span><span class="zh">運作方式</span></p>
+    <h2><span class="en">From the cloud to a folder you control</span><span class="fr">Du cloud à un dossier que vous contrôlez</span><span class="zh">從雲端到你掌控的資料夾</span></h2>
+    <p class="lead"><span class="en">Looki keeps your moments online. The app reads them with your personal API key, caches what makes browsing fast, and writes a durable copy only when you ask for it.</span><span class="fr">Looki garde vos moments en ligne. L'app les lit avec votre clé API personnelle, met en cache ce qui rend la navigation rapide, et n'écrit une copie durable que lorsque vous le demandez.</span><span class="zh">Looki 把你的時刻放在雲端。應用程式用你的個人 API 金鑰讀取，快取讓瀏覽變快的部分，並且只在你要求時才寫入一份持久副本。</span></p>
+  </div>
+  <div class="flow">
+    <div class="node"><div class="ni">☁️</div><h3><span class="en">Looki Open API</span><span class="fr">API ouverte Looki</span><span class="zh">Looki 開放 API</span></h3><p><span class="en">Moments by day, moment detail, semantic search — read-only, with your own key.</span><span class="fr">Moments par jour, détail d'un moment, recherche sémantique — en lecture seule, avec votre propre clé.</span><span class="zh">依日期的時刻、單一時刻詳情、語意搜尋——唯讀，使用你自己的金鑰。</span></p></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="ni">💻</div><h3>Looki pour Mac</h3><p><span class="en">Calendar, timeline, player, search. Light cache of metadata and thumbnails, never of signed links.</span><span class="fr">Calendrier, timeline, lecteur, recherche. Cache léger des métadonnées et vignettes, jamais des liens signés.</span><span class="zh">日曆、時間線、播放器、搜尋。僅輕量快取中繼資料與縮圖，絕不快取已簽章連結。</span></p></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="ni">📁</div><h3><span class="en">Your archive</span><span class="fr">Votre archive</span><span class="zh">你的封存</span></h3><p><span class="en">Per day: one media file per moment, <code>journal.md</code>, <code>moments.json</code>. Open it in any Markdown app.</span><span class="fr">Par jour : un média par moment, <code>journal.md</code>, <code>moments.json</code>. Ouvrez-le dans n'importe quelle app Markdown.</span><span class="zh">每天：每個時刻一個媒體檔、<code>journal.md</code>、<code>moments.json</code>。可用任何 Markdown 應用程式開啟。</span></p></div>
+  </div>
+  <pre class="tree" aria-label="Archive folder layout"><span class="c"># ~/Looki/</span>
+2026/09/05/
+├── 0959-e65012ec.mp4
+├── 1007-004b7e07.mp4
+├── 1035-0c2e3b65.mp4
+├── …
+├── journal.md      <span class="c"># chronology table + narrative, one heading per moment</span>
+└── moments.json    <span class="c"># raw metadata, signed links stripped</span></pre>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <div class="center">
+    <p class="eyebrow"><span class="en">get started</span><span class="fr">démarrer</span><span class="zh">開始使用</span></p>
+    <h2><span class="en">Up and running in a minute</span><span class="fr">Opérationnelle en une minute</span><span class="zh">一分鐘內開始使用</span></h2>
+    <p class="lead"><span class="en">No App Store, no account beyond your Looki one. Notarized by Apple — it launches by double-click.</span><span class="fr">Pas d'App Store, aucun compte autre que votre compte Looki. Notarisée par Apple — elle se lance d'un double-clic.</span><span class="zh">不需 App Store，除了 Looki 帳號外不需其他帳號。已通過 Apple 公證——按兩下即可啟動。</span></p>
+  </div>
+  <div class="steps">
+    <div class="step"><h3><span class="en">Download</span><span class="fr">Télécharger</span><span class="zh">下載</span></h3><p><span class="en">Grab the latest signed <code>.dmg</code> from GitHub Releases and drag <b>Looki pour Mac</b> into <code>/Applications</code>.</span><span class="fr">Récupérez le dernier <code>.dmg</code> signé depuis GitHub Releases et glissez <b>Looki pour Mac</b> dans <code>/Applications</code>.</span><span class="zh">從 GitHub Releases 取得最新的已簽章 <code>.dmg</code>，把 <b>Looki pour Mac</b> 拖入 <code>/Applications</code>。</span></p></div>
+    <div class="step"><h3><span class="en">Create an API key</span><span class="fr">Créer une clé API</span><span class="zh">建立 API 金鑰</span></h3><p><span class="en">On <b>web.looki.ai › API Keys</b>, request access and create a key. It is shown once — paste it in the app's Settings; it goes straight into the Keychain.</span><span class="fr">Sur <b>web.looki.ai › API Keys</b>, demandez l'accès et créez une clé. Elle ne s'affiche qu'une fois — collez-la dans les Réglages de l'app ; elle va directement dans le Trousseau.</span><span class="zh">在 <b>web.looki.ai › API Keys</b> 申請存取並建立金鑰。它只會顯示一次——貼到應用程式的設定中，即會直接存入鑰匙圈。</span></p></div>
+    <div class="step"><h3><span class="en">Browse</span><span class="fr">Parcourir</span><span class="zh">瀏覽</span></h3><p><span class="en">Today's moments appear at once. Pick a day, search, or choose an archive folder and press <b>Archive this day</b>.</span><span class="fr">Les moments du jour apparaissent aussitôt. Choisissez un jour, cherchez, ou définissez un dossier d'archive et pressez <b>Archiver ce jour</b>.</span><span class="zh">今天的時刻立即出現。挑一天、搜尋，或選定封存資料夾後按下<b>封存這一天</b>。</span></p></div>
+  </div>
+  <div class="note">
+    <span class="en"><b>What the API exposes.</b> The Looki Open API is read-only: profile, moments by day, moment detail with one cover media per moment, and semantic search. The app cannot trigger a capture or change device settings — that stays in the Looki mobile app.</span><span class="fr"><b>Ce que l'API expose.</b> L'API ouverte Looki est en lecture seule : profil, moments par jour, détail d'un moment avec un média de couverture, recherche sémantique. L'app ne peut ni déclencher une capture ni modifier les réglages du boîtier — cela reste dans l'app mobile Looki.</span><span class="zh"><b>API 提供的內容。</b>Looki 開放 API 為唯讀：個人資料、依日期的時刻、含一個封面媒體的時刻詳情，以及語意搜尋。應用程式無法觸發拍攝或更改裝置設定——這些仍需在 Looki 手機 App 內操作。</span>
+  </div>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <p class="eyebrow"><span class="en">ready?</span><span class="fr">prêt ?</span><span class="zh">準備好了嗎？</span></p>
+  <h2><span class="en">Bring your Looki days home to macOS</span><span class="fr">Ramenez vos journées Looki sur macOS</span><span class="zh">把你的 Looki 日子帶回 macOS</span></h2>
+  <p class="lead" style="margin:0 auto 6px"><span class="en">Free, open-source, signed &amp; notarized. macOS 26 or later.</span><span class="fr">Gratuite, open source, signée et notarisée. macOS 26 ou ultérieur.</span><span class="zh">免費、開源、已簽章與公證。macOS 26 或以上版本。</span></p>
+  <div class="cta">
+    <a class="btn btn-primary" href="https://github.com/vincentlauriat/LookiMac/releases/latest">⬇︎ <span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a>
+    <a class="btn btn-ghost" href="https://github.com/vincentlauriat/LookiMac#readme"><span class="en">Read the docs</span><span class="fr">Lire la doc</span><span class="zh">閱讀說明文件</span></a>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Looki pour Mac · <span class="en">MIT License</span><span class="fr">Licence MIT</span><span class="zh">MIT 授權</span> · © 2026 Vincent Lauriat ·
+  <a href="https://github.com/vincentlauriat/LookiMac">github.com/vincentlauriat/LookiMac</a>
+  <div class="disclaimer"><span class="en">Unofficial third-party app · not affiliated with, endorsed by, or supported by Looki Tech Limited.</span><span class="fr">App tierce non officielle · sans affiliation, approbation ni support de Looki Tech Limited.</span><span class="zh">非官方第三方應用程式 · 與 Looki Tech Limited 無隸屬關係，亦未獲其背書或支援。</span></div>
+</div></footer>
+
+<script>
+  var LANG_TAG={en:'en',fr:'fr',zh:'zh-Hant'};
+  function setLang(l){
+    if(!LANG_TAG[l]) l='en';
+    document.body.classList.remove('lang-en','lang-fr','lang-zh');
+    document.body.classList.add('lang-'+l);
+    document.documentElement.lang=LANG_TAG[l];
+    document.querySelectorAll('.langtog button').forEach(function(b){
+      var on=b.dataset.lang===l;
+      b.classList.toggle('on',on);
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+    try{localStorage.setItem('vl-lang',l)}catch(e){}
+  }
+  (function(){
+    var saved;try{saved=localStorage.getItem('vl-lang')}catch(e){}
+    var n=(navigator.language||'en').slice(0,2).toLowerCase();
+    setLang(saved||(n==='zh'?'zh':(n==='fr'?'fr':'en')));
+  })();
+</script>
+</body>
+</html>
