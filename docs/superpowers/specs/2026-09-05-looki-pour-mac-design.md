@@ -39,14 +39,15 @@ Auth header: `x-api-key: <key>`. Envelope: `{ "code": Int, "detail": String, "da
 | `GET /me` | Account profile | `data.user {id, first_name, last_name, tz, gender, birthday}` |
 | `GET /moments?on_date=YYYY-MM-DD&need_adjacent_date=true` | Moments of a day | `data` is an array of `Moment`. Param name found in web.looki.ai bundle. |
 | `GET /moments/{moment_id}` | Moment detail | Includes `cover_file.file.temporary_url` (signed, expiring) |
-| `GET /moments/search?query=...` | Semantic search | `data {items: [Moment], has_more: Bool}`; pagination param to confirm (`cursor`/`page`) |
+| `GET /moments/search?query=...&page=N&page_size=M` | Semantic search | `data {items: [Moment], has_more: Bool}`; `page` is 1-based, `page_size` verified (default returns all matches). |
 
 `Moment` fields: `id`, `title`, `description`, `media_types` (`VIDEO`, `IMAGE`),
 `cover_file {id, file {temporary_url, media_type, metadata {width, height, duration_ms}}, location, created_at, tz}`,
 `date`, `tz`, `start_time`, `end_time`. `location` is a JSON **string**
 (`{street, locality, administrativeArea, isoCountryCode, subLocality?}`) and is
-decoded in a second pass. Per-moment file lists beyond `cover_file` are to be
-confirmed from the detail endpoint during implementation.
+decoded in a second pass. **The detail endpoint returns the same fields as the
+list entry — only `cover_file`, no per-moment file list.** The open API therefore
+exposes exactly one media file per moment (the cover video or photo).
 
 Web-app-only routes (`/moments/by-cursor`, `/moments/monthly-calendar`) are **not**
 available on the open API; the month calendar is built client-side.
@@ -65,7 +66,7 @@ LookiMac.xcodeproj
 ### 4.1 LookiKit
 
 - **`LookiClient`** (`actor`) — `me()`, `moments(on: Date, timeZone:)`,
-  `moment(id:)`, `search(query:, cursor:)`. Injected `URLSession` and base URL.
+  `moment(id:)`, `search(query:, page:, pageSize:)`. Injected `URLSession` and base URL.
   Decodes the envelope; `code != 0` → `LookiError.api(code, detail)`.
   Errors: `.unauthorized`, `.rateLimited(retryAfter: TimeInterval?)`, `.network`,
   `.decoding`, `.api`. No silent nil `data`.
@@ -78,7 +79,8 @@ LookiMac.xcodeproj
 - **`JournalRenderer`** — pure function `[Moment] → Markdown String`, same layout
   as `journal/2026-09-05.md` (header, chronology table, narrative, footer).
 - **`DayArchiver`** — for a date and a destination root: creates
-  `<root>/YYYY/MM/DD/`, downloads each moment's media (via fresh detail calls),
+  `<root>/YYYY/MM/DD/`, downloads each moment's cover media (one file per moment,
+  via fresh detail calls for unexpired signed URLs),
   writes `journal.md` and `moments.json`. Reports progress via `AsyncStream`.
   Skips files already present with matching size.
 
@@ -91,7 +93,7 @@ Three-column `NavigationSplitView`:
   throttled). Month navigation, "today" button.
 - **Content** — timeline of the selected day: cards with time range, title,
   street, thumbnail, media badges. When the toolbar search field is active, the
-  column shows search results instead, paginated with `has_more`.
+  column shows search results instead, paginated with `page`/`page_size` and `has_more`.
 - **Detail** — `AVPlayer` on the fresh signed URL, full description, address,
   start/end, "Reveal in archive" when the day is archived.
 - **Toolbar** — search field, "Archiver ce jour", "Ouvrir le dossier d'archive".
