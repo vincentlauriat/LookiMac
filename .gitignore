@@ -17,3 +17,5 @@ xcuserdata/
 .DS_Store
 # personal data
 journal/
+.build/
+.swiftpm/
