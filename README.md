@@ -18,7 +18,8 @@ transparence — pas un produit avec support.
 | **Détail** | Lecture de la vidéo ou de la photo du moment, description complète, adresse. |
 | **Recherche** | Recherche sémantique dans tous les souvenirs, avec pagination. |
 | **Journal** | Fil des posts générés par Looki (journal, BD, vlog, santé, récap) groupés par jour, rendu Markdown natif, inclus dans l'archive. |
-| **Archive** | « Archiver ce jour » télécharge les médias et écrit `journal.md` + `moments.json` dans `AAAA/MM/JJ/`. |
+| **Clips** | Galerie de tous les clips d'un moment (vignettes, heure, durée) ; un clic lit le clip. |
+| **Archive** | « Archiver ce jour » télécharge tous les clips de chaque moment dans `AAAA/MM/JJ/<HHmm-id>/` et écrit `journal.md` + `moments.json`. |
 | **Réglages** | Clé API dans le trousseau, test de connexion, dossier d'archive, purge du cache. |
 
 ## Installation
@@ -68,6 +69,7 @@ de médias qu'il renvoie.
 
 - [x] v0.1 — calendrier, timeline, détail, recherche, archive, DMG signé
 - [x] v0.2 — Journal (posts générés par Looki), correctif du lecteur vidéo
+- [x] v0.3 — galerie de clips, archive complète, calendrier en un appel, pagination du journal corrigée
 - [ ] Mises à jour Sparkle
 - [ ] Cible CLI réutilisant LookiKit
 - [ ] Index local pour recherche hors ligne

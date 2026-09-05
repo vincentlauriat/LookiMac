@@ -101,7 +101,9 @@ final class AppModel {
         guard day != selectedDay || dayState == .idle else { return }
         selectedDay = day
         selectedMoment = nil
-        if (day.year, day.month) != visibleMonth { showMonth(year: day.year, month: day.month) }
+        // Also on the very first selection: the visible month starts out equal to today's month,
+        // so without this the month marks were never fetched until the user changed month.
+        if (day.year, day.month) != visibleMonth || monthTask == nil { showMonth(year: day.year, month: day.month) }
         dayLoadTask?.cancel()
         dayLoadTask = Task { await reloadSelectedDay() }
     }

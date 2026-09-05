@@ -5,6 +5,21 @@ All notable changes to Looki pour Mac are documented here. Format based on
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-05
+
+### Added
+- **Clip gallery**: the moment detail lists every clip of the moment (`GET /moments/{id}/files`, paginated) with thumbnails, time and duration; click a clip to play it, "Couverture" returns to the cover.
+- **Full archive**: "Archiver ce jour" now downloads every clip of every moment into `AAAA/MM/JJ/<HHmm-id8>/<001-fileid8>.<ext>` (cover fallback when a moment lists no clips); the progress bar grows as clips are discovered.
+- Journal mode of the calendar marks the days that have posts (`GET /journals/calendar`).
+- `LookiKit`: `momentFiles`/`allMomentFiles`, `momentCalendar`, `journalCalendar`, `FilesPage`, `CalendarDay`, `MomentSummary`, `MomentFile.thumbnail`, `RemoteFile.size`, `ArchiveEvent.expanded`. 58 unit tests.
+
+### Changed
+- Month marks come from one `GET /moments/calendar` call per month instead of one request per day (cached counts still win).
+
+### Fixed
+- Journal pagination sent `cursor_id`; the API expects `cursor_date` + `max_days` (31), so only the first page ever loaded once the feed had more than 31 days.
+- Month marks were not fetched at launch (only after changing month): days of the current month other than today had no dot.
+
 ## [0.2.0] — 2026-09-05
 
 ### Added

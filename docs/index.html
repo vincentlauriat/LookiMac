@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Looki pour Mac — Review, search & archive your Looki L1 moments on macOS</title>
-<meta name="description" content="A native macOS app for the Looki L1 wearable camera: calendar of your days, timeline of moments with thumbnails, video playback, the Looki journal feed, semantic search across all memories, and one-click archive of a day to Markdown + media. Free & open-source (MIT), signed & notarized, read-only on Looki.">
+<meta name="description" content="A native macOS app for the Looki L1 wearable camera: calendar of your days, timeline of moments with thumbnails, video playback, the Looki journal feed, semantic search across all memories, and a clip gallery per moment, and one-click archive of a day (every clip) to Markdown + media. Free & open-source (MIT), signed & notarized, read-only on Looki.">
 <meta property="og:title" content="Looki pour Mac">
 <meta property="og:description" content="Review, search and archive the moments of your Looki L1 camera — natively on macOS. Free & open-source, no telemetry.">
 <meta property="og:type" content="website">
@@ -236,7 +236,7 @@
     <div class="card"><div class="ico">▶️</div><h3><span class="en">Play and read</span><span class="fr">Lire et relire</span><span class="zh">播放與閱讀</span></h3><p><span class="en">Native video playback, the full AI-written description, the address and the duration — all in the detail column, no browser needed.</span><span class="fr">Lecture vidéo native, la description complète rédigée par l'IA, l'adresse et la durée — dans la colonne de détail, sans navigateur.</span><span class="zh">原生影片播放、AI 撰寫的完整描述、地址與時長——全都在詳細欄位裡，不需要瀏覽器。</span></p></div>
     <div class="card"><div class="ico">🔎</div><h3><span class="en">Semantic search</span><span class="fr">Recherche sémantique</span><span class="zh">語意搜尋</span></h3><p><span class="en">Type "coffee at the fair" or "conversation on the train": Looki's search finds the moments across every day, with pagination as you scroll.</span><span class="fr">Tapez « café au salon » ou « conversation dans le train » : la recherche Looki retrouve les moments sur toutes vos journées, avec pagination au défilement.</span><span class="zh">輸入「展會上的咖啡」或「火車上的對話」：Looki 的搜尋會在所有日子中找出對應時刻，捲動時自動載入更多。</span></p></div>
     <div class="card"><div class="ico">📖</div><h3><span class="en">Journal</span><span class="fr">Journal</span><span class="zh">日誌</span></h3><p><span class="en">The posts Looki writes from your day — diary captions with a generated image, comic page, daily vlog, health report, yesterday's recap — in a day-grouped feed with native Markdown rendering.</span><span class="fr">Les posts que Looki rédige à partir de votre journée — légendes illustrées, page BD, vlog du jour, rapport santé, récap d'hier — dans un fil groupé par jour, avec rendu Markdown natif.</span><span class="zh">Looki 根據你的一天撰寫的貼文——附生成圖片的日記、漫畫頁、每日 vlog、健康報告、昨日回顧——以按日分組的動態呈現，並原生渲染 Markdown。</span></p></div>
-    <div class="card"><div class="ico">🗂️</div><h3><span class="en">Archive a day</span><span class="fr">Archiver une journée</span><span class="zh">封存一天</span></h3><p><span class="en">One click downloads the day's media into <b>YYYY/MM/DD/</b> in a folder you choose, plus <b>journal.md</b> and <b>moments.json</b>. Already-saved files are skipped.</span><span class="fr">Un clic télécharge les médias du jour dans <b>AAAA/MM/JJ/</b> du dossier de votre choix, plus <b>journal.md</b> et <b>moments.json</b>. Les fichiers déjà présents sont ignorés.</span><span class="zh">一鍵把當天的媒體下載到你選擇的資料夾中的 <b>YYYY/MM/DD/</b>，並附上 <b>journal.md</b> 與 <b>moments.json</b>。已存在的檔案會自動略過。</span></p></div>
+    <div class="card"><div class="ico">🗂️</div><h3><span class="en">Archive a day</span><span class="fr">Archiver une journée</span><span class="zh">封存一天</span></h3><p><span class="en">One click downloads <b>every clip</b> of every moment into <b>YYYY/MM/DD/</b> in a folder you choose, plus <b>journal.md</b> and <b>moments.json</b>. Already-saved files are skipped.</span><span class="fr">Un clic télécharge <b>tous les clips</b> de chaque moment dans <b>AAAA/MM/JJ/</b> du dossier de votre choix, plus <b>journal.md</b> et <b>moments.json</b>. Les fichiers déjà présents sont ignorés.</span><span class="zh">一鍵把每個時刻的<b>所有片段</b>下載到你選擇的資料夾中的 <b>YYYY/MM/DD/</b>，並附上 <b>journal.md</b> 與 <b>moments.json</b>。已存在的檔案會自動略過。</span></p></div>
     <div class="card"><div class="ico">🔒</div><h3><span class="en">Private by design</span><span class="fr">Privée par conception</span><span class="zh">以隱私為設計前提</span></h3><p><span class="en">API key in the macOS Keychain, sandboxed, <b>no telemetry</b>. Signed media links are never written to disk. Nothing leaves your Mac except calls to Looki.</span><span class="fr">Clé API dans le Trousseau macOS, app sandboxée, <b>aucune télémétrie</b>. Les liens médias signés ne sont jamais écrits sur disque. Rien ne quitte votre Mac hormis les appels à Looki.</span><span class="zh">API 金鑰存放於 macOS 鑰匙圈，沙盒化，<b>沒有遙測</b>。已簽章的媒體連結絕不寫入磁碟。除了呼叫 Looki，沒有任何資料離開你的 Mac。</span></p></div>
   </div>
 </div></section>
@@ -268,14 +268,17 @@
     <div class="arrow">→</div>
     <div class="node"><div class="ni">💻</div><h3>Looki pour Mac</h3><p><span class="en">Calendar, timeline, player, search. Light cache of metadata and thumbnails, never of signed links.</span><span class="fr">Calendrier, timeline, lecteur, recherche. Cache léger des métadonnées et vignettes, jamais des liens signés.</span><span class="zh">日曆、時間線、播放器、搜尋。僅輕量快取中繼資料與縮圖，絕不快取已簽章連結。</span></p></div>
     <div class="arrow">→</div>
-    <div class="node"><div class="ni">📁</div><h3><span class="en">Your archive</span><span class="fr">Votre archive</span><span class="zh">你的封存</span></h3><p><span class="en">Per day: one media file per moment, <code>journal.md</code>, <code>moments.json</code>. Open it in any Markdown app.</span><span class="fr">Par jour : un média par moment, <code>journal.md</code>, <code>moments.json</code>. Ouvrez-le dans n'importe quelle app Markdown.</span><span class="zh">每天：每個時刻一個媒體檔、<code>journal.md</code>、<code>moments.json</code>。可用任何 Markdown 應用程式開啟。</span></p></div>
+    <div class="node"><div class="ni">📁</div><h3><span class="en">Your archive</span><span class="fr">Votre archive</span><span class="zh">你的封存</span></h3><p><span class="en">Per day: one folder per moment with all its clips, <code>journal.md</code>, <code>moments.json</code>. Open it in any Markdown app.</span><span class="fr">Par jour : un dossier par moment avec tous ses clips, <code>journal.md</code>, <code>moments.json</code>. Ouvrez-le dans n'importe quelle app Markdown.</span><span class="zh">每天：每個時刻一個資料夾（含所有片段）、<code>journal.md</code>、<code>moments.json</code>。可用任何 Markdown 應用程式開啟。</span></p></div>
   </div>
   <pre class="tree" aria-label="Archive folder layout"><span class="c"># ~/Looki/</span>
 2026/09/05/
-├── 0959-e65012ec.mp4
-├── 1007-004b7e07.mp4
-├── 1035-0c2e3b65.mp4
+├── 0959-e65012ec/  <span class="c"># one folder per moment, every clip inside</span>
+│   ├── 001-2c8b2b1f.mp4
+│   ├── 002-4bd6ac35.mp4
+│   └── 003-4e7bbcda.mp4
+├── 1007-004b7e07/
 ├── …
+├── journal/        <span class="c"># media of the day's journal posts</span>
 ├── journal.md      <span class="c"># chronology table + narrative, one heading per moment</span>
 └── moments.json    <span class="c"># raw metadata, signed links stripped</span></pre>
 </div></section>
