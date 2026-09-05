@@ -5,6 +5,8 @@ All notable changes to Looki pour Mac are documented here. Format based on
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-09-05
+
 ### Added
 - App icon (rose-coral tile, camera glyph), generated from `Scripts/make-icon.swift`.
 
@@ -25,5 +27,6 @@ First public release.
 - The Looki Open API exposes one cover media per moment and is read-only; the app cannot trigger captures or change device settings.
 - No app icon yet; no auto-update.
 
-[Unreleased]: https://github.com/vincentlauriat/LookiMac/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/vincentlauriat/LookiMac/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.1.1
 [0.1.0]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.1.0
