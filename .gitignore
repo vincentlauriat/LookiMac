@@ -1,0 +1,19 @@
+# personal doc journals
+COMMANDS.md
+MEMORY.md
+CHANGES.md
+TODOS.md
+PLAN.md
+.omc/
+# build / release
+build/
+release/
+*.dmg
+*.zip
+DerivedData/
+*.xcodeproj
+*.xcuserstate
+xcuserdata/
+.DS_Store
+# personal data
+journal/
