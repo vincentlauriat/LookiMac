@@ -1,0 +1,26 @@
+{"code":0,"detail":"OK","data":{"items":[
+ {"date":"2026-09-05","journals":[
+  {"id":"j0000000-0000-4000-8000-000000000001","type":"DIARY","description":"Tech et café en ville.",
+   "media_items":[{"source":{"temporary_url":"https://user-file.example.test/j/1.png?x-looki-token=SIGNEDJ1","media_type":"IMAGE","metadata":{"width":1024,"height":1024}}}],
+   "date":"2026-09-05","tz":"+02:00","recorded_at":"2026-09-05T15:46:31.505000+02:00","created_at":"2026-09-05T16:43:45.963762+02:00"},
+  {"id":"j0000000-0000-4000-8000-000000000002","type":"YESTERDAY_RECAP","title":"Récap d'hier : une journée dense","description":"Une journée marathon entre salon et débats.",
+   "content":"### Exploration\n\n- **Robots**: analyse des aspirateurs.\n- **Lunettes**: convergence ergonomie et puissance.\n\n### Soirée\n\nDîner aux chandelles pour clore.\n",
+   "media_items":[],"date":"2026-09-05","tz":"+02:00","recorded_at":"2026-09-05T08:00:00.000000+02:00","created_at":"2026-09-05T08:00:01.000000+02:00"},
+  {"id":"j0000000-0000-4000-8000-000000000007","type":"FUTURE_TYPE","title":"Nouveau format","description":"Un type que l'app ne connaît pas encore.",
+   "media_items":[],"date":"2026-09-05","tz":"+02:00","recorded_at":"2026-09-05T07:00:00.000000+02:00","created_at":"2026-09-05T07:00:01.000000+02:00"}
+ ]},
+ {"date":"2026-09-04","journals":[
+  {"id":"j0000000-0000-4000-8000-000000000003","type":"COMIC_PAGE","title":"Une journée bien remplie","description":"On te suit du salon au dîner.","start_date":"2026-09-04",
+   "media_items":[{"source":{"temporary_url":"https://user-file.example.test/j/3.png?x-looki-token=SIGNEDJ3","media_type":"IMAGE","metadata":{"width":1024,"height":1536}}}],
+   "date":"2026-09-04","tz":"+02:00","recorded_at":"2026-09-04T23:45:00.000000+02:00","created_at":"2026-09-04T23:45:01.000000+02:00"},
+  {"id":"j0000000-0000-4000-8000-000000000004","type":"DAILY_VLOG","title":"Entre écrans et pluie","description":"Le vlog capture une journée curieuse.",
+   "media_items":[{"source":{"temporary_url":"https://user-file.example.test/j/4.mp4?x-looki-token=SIGNEDJ4","media_type":"VIDEO","metadata":{"width":720,"height":1280,"duration_ms":54272}},"thumbnail":{"temporary_url":"https://user-file.example.test/j/4t.jpg?x-looki-token=SIGNEDJ4T","media_type":"IMAGE","metadata":{"width":720,"height":1280}}}],
+   "date":"2026-09-04","tz":"+02:00","recorded_at":"2026-09-04T23:40:00.000000+02:00","created_at":"2026-09-04T23:40:01.000000+02:00"},
+  {"id":"j0000000-0000-4000-8000-000000000005","type":"DAILY_HEALTH_REPORT","title":"Daily Health Report","description":"Marche intensive, déficit de 630 kcal.",
+   "media_items":[],"date":"2026-09-04","tz":"+02:00","recorded_at":"2026-09-04T23:31:00.000000+02:00","created_at":"2026-09-04T23:31:01.000000+02:00"},
+  {"id":"j0000000-0000-4000-8000-000000000006","type":"SYSTEM_POST","title":"📢 Bienvenue","description":"Ce que Looki pourrait devenir",
+   "content":"### Les premiers jours\n![first_day](https://public-file.example.test/1.png)\nQuelques moments visuels\n\n↓\n\n### Après une semaine\nDes souvenirs en BD.\n",
+   "media_items":[{"source":{"temporary_url":"https://user-file.example.test/j/6.png?x-looki-token=SIGNEDJ6","media_type":"IMAGE","metadata":{"width":1024,"height":1024}}}],
+   "date":"2026-09-04","tz":"+02:00","recorded_at":"2026-09-04T12:20:00.000000+02:00","created_at":"2026-09-04T12:20:01.000000+02:00"}
+ ]}
+],"next_cursor_id":"2026-09-04","has_more":false}}
