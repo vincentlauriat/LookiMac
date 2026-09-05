@@ -42,6 +42,17 @@ public actor LookiClient {
         ], as: SearchPage.self)
     }
 
+    /// Journal feed, newest day first. Pass `nextCursorId` from the previous page to continue.
+    public func journals(cursor: String? = nil) async throws -> JournalPage {
+        var query: [URLQueryItem] = []
+        if let cursor { query.append(URLQueryItem(name: "cursor_id", value: cursor)) }
+        return try await get("journals", query: query, as: JournalPage.self)
+    }
+
+    public func journal(id: String) async throws -> JournalPost {
+        try await get("journals/\(id)", as: JournalPost.self)
+    }
+
     // MARK: Transport
 
     private func get<T: Decodable & Sendable>(_ path: String, query: [URLQueryItem] = [], as type: T.Type) async throws -> T {

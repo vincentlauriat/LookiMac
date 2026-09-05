@@ -98,4 +98,33 @@ import Foundation
         do { _ = try await client.me(); Issue.record("expected throw") }
         catch let e as LookiError { if case .decoding = e {} else { Issue.record("wrong error \(e)") } }
     }
+
+    @Test func journalsFirstPageHasNoCursorParam() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/journals", body: try Fixture.data("journals"))
+        let page = try await client.journals()
+        #expect(page.items.count == 2)
+        let url = try #require(StubURLProtocol.requests.first?.url)
+        #expect(url.query() == nil)
+    }
+
+    @Test func journalsNextPageSendsCursorId() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/journals", body: try Fixture.data("journals"))
+        _ = try await client.journals(cursor: "2026-09-04")
+        let url = try #require(StubURLProtocol.requests.first?.url)
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(items.contains(URLQueryItem(name: "cursor_id", value: "2026-09-04")))
+    }
+
+    @Test func journalDetail() async throws {
+        let client = makeClient()
+        let page = try #require(try LookiJSON.decoder().decode(Envelope<JournalPage>.self, from: Fixture.data("journals")).data)
+        let post = page.items[0].journals[0]
+        let body = try JSONSerialization.data(withJSONObject: ["code": 0, "detail": "OK", "data": try JSONSerialization.jsonObject(with: LookiJSON.encoder().encode(post))])
+        StubURLProtocol.enqueue(path: "/api/v1/journals/\(post.id)", body: body)
+        let fetched = try await client.journal(id: post.id)
+        #expect(fetched.id == post.id)
+        #expect(fetched.type == .diary)
+    }
 }
