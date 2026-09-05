@@ -81,4 +81,27 @@ import Foundation
             try await cache.storeThumbnail(Data([1]), for: "../etc/passwd")
         }
     }
+
+    func fixtureJournals() throws -> [JournalDay] {
+        try #require(try LookiJSON.decoder().decode(Envelope<JournalPage>.self, from: Fixture.data("journals")).data).items
+    }
+
+    @Test func storesJournalsPerDayWithoutTokens() async throws {
+        let root = try tempRoot(); let cache = MomentCache(root: root)
+        for day in try fixtureJournals() { try await cache.storeJournals(day.journals, for: day.date) }
+        let sept5 = try #require(await cache.journals(for: DayKey(year: 2026, month: 9, day: 5)))
+        #expect(sept5.count == 3)
+        #expect(sept5.allSatisfy { $0.mediaItems.allSatisfy { $0.source.temporaryURL == nil && $0.thumbnail?.temporaryURL == nil } })
+        let raw = try String(contentsOf: root.appending(path: "journals/2026-09-04.json"), encoding: .utf8)
+        #expect(!raw.contains("SIGNED"))
+        #expect(await cache.journalDays() == [DayKey(year: 2026, month: 9, day: 5), DayKey(year: 2026, month: 9, day: 4)])
+        #expect(await cache.journals(for: DayKey(year: 2026, month: 1, day: 1)) == nil)
+    }
+
+    @Test func purgeRemovesJournals() async throws {
+        let cache = MomentCache(root: try tempRoot())
+        try await cache.storeJournals(try fixtureJournals()[0].journals, for: DayKey(year: 2026, month: 9, day: 5))
+        try await cache.purge()
+        #expect(await cache.journalDays().isEmpty)
+    }
 }

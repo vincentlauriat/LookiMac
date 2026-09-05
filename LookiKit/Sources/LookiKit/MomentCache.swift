@@ -24,6 +24,7 @@ public actor MomentCache {
 
     private var daysDir: URL { root.appending(path: "days") }
     private var thumbsDir: URL { root.appending(path: "thumbs") }
+    private var journalsDir: URL { root.appending(path: "journals") }
 
     // MARK: Days
 
@@ -63,10 +64,29 @@ public actor MomentCache {
         try data.write(to: thumbsDir.appending(path: "\(fileID).jpg"), options: .atomic)
     }
 
+    // MARK: Journals
+
+    public func journals(for key: DayKey) -> [JournalPost]? {
+        guard let data = try? Data(contentsOf: journalsDir.appending(path: "\(key.string).json")) else { return nil }
+        return try? decoder.decode([JournalPost].self, from: data)
+    }
+
+    public func storeJournals(_ posts: [JournalPost], for key: DayKey) throws {
+        try fm.createDirectory(at: journalsDir, withIntermediateDirectories: true)
+        let stripped = posts.map { $0.strippingSignedURLs() }
+        try encoder.encode(stripped).write(to: journalsDir.appending(path: "\(key.string).json"), options: .atomic)
+    }
+
+    /// Every cached journal day, newest first.
+    public func journalDays() -> [DayKey] {
+        guard let names = try? fm.contentsOfDirectory(atPath: journalsDir.path()) else { return [] }
+        return names.filter { $0.hasSuffix(".json") }.compactMap { DayKey(string: String($0.dropLast(5))) }.sorted(by: >)
+    }
+
     // MARK: Maintenance
 
     public func purge() throws {
-        for dir in [daysDir, thumbsDir] where fm.fileExists(atPath: dir.path()) {
+        for dir in [daysDir, thumbsDir, journalsDir] where fm.fileExists(atPath: dir.path()) {
             try fm.removeItem(at: dir)
         }
     }
