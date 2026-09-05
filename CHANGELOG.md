@@ -5,6 +5,9 @@ All notable changes to Looki pour Mac are documented here. Format based on
 
 ## [Unreleased]
 
+### Fixed
+- Crash when opening a video moment (`failed to demangle superclass of VideoPlayerView`): with Xcode 27 the `import AVKit` autolink only pulls the `_AVKit_SwiftUI` overlay, so `AVKit.framework` is now linked explicitly. Affects 0.1.0 and 0.1.1.
+
 ## [0.1.1] — 2026-09-05
 
 ### Added
