@@ -1,0 +1,18 @@
+{"code":0,"detail":"OK","data":[
+ {"id":"aaaaaaaa-0000-4000-8000-000000000001","title":"Promenade au parc",
+  "description":"L'utilisateur marche dans un parc ensoleillé, longe un étang et croise des joggeurs.",
+  "media_types":["VIDEO"],
+  "cover_file":{"id":"f00000000000000000000001",
+    "file":{"temporary_url":"https://user-file.example.test/u/1.mp4?x-looki-token=SIGNED1","media_type":"VIDEO","metadata":{"height":1200,"duration_ms":5068,"width":1600}},
+    "location":"{\"street\":\"Rue du Parc, 75000 Paris, France\",\"locality\":\"Paris\",\"administrativeArea\":\"Île-de-France\",\"isoCountryCode\":\"FR\"}",
+    "created_at":"2026-09-05T10:02:03.568000+02:00","tz":"+02:00"},
+  "date":"2026-09-05","tz":"+02:00","start_time":"2026-09-05T09:59:31.349000+02:00","end_time":"2026-09-05T10:03:22.192000+02:00"},
+ {"id":"aaaaaaaa-0000-4000-8000-000000000002","title":"Déjeuner en terrasse",
+  "description":"Repas partagé en terrasse, discussion animée autour d'un plat de pâtes.",
+  "media_types":["IMAGE","VIDEO"],
+  "cover_file":{"id":"f00000000000000000000002",
+    "file":{"temporary_url":"https://user-file.example.test/u/2.jpg?x-looki-token=SIGNED2","media_type":"IMAGE","metadata":{"height":1200,"width":1600}},
+    "location":"{\"street\":\"Place du Marché 3, 75000 Paris, France\",\"subLocality\":\"Centre\",\"locality\":\"Paris\",\"administrativeArea\":\"Île-de-France\",\"isoCountryCode\":\"FR\"}",
+    "created_at":"2026-09-05T12:40:00.000000+02:00","tz":"+02:00"},
+  "date":"2026-09-05","tz":"+02:00","start_time":"2026-09-05T12:35:52.228000+02:00","end_time":"2026-09-05T13:46:10.702000+02:00"}
+]}
