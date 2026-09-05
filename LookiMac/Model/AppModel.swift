@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import LookiKit
@@ -162,5 +163,126 @@ final class AppModel {
                 return   // stop scanning on the first error; the day view reports it when selected
             }
         }
+    }
+
+    // MARK: Search
+
+    var searchQuery: String = ""
+    private(set) var searchResults: [Moment] = []
+    private(set) var searchHasMore = false
+    private(set) var isSearching = false
+    private(set) var searchError: LookiError?
+    private var searchPage = 0
+    private let searchPageSize = 20
+
+    var isSearchMode: Bool { !searchQuery.trimmingCharacters(in: .whitespaces).isEmpty }
+
+    /// Debounced by the caller (`.task(id:)` in the view); resets pagination.
+    func runSearch() async {
+        let q = searchQuery.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { clearSearch(); return }
+        guard let client else { searchError = .missingAPIKey; return }
+        searchResults = []; searchPage = 0; searchHasMore = false; searchError = nil
+        isSearching = true
+        defer { isSearching = false }
+        do {
+            let page = try await client.search(query: q, page: 1, pageSize: searchPageSize)
+            guard !Task.isCancelled, q == searchQuery.trimmingCharacters(in: .whitespaces) else { return }
+            searchResults = page.items; searchHasMore = page.hasMore; searchPage = 1
+        } catch let e as LookiError { searchError = e }
+        catch { searchError = .network(error.localizedDescription) }
+    }
+
+    func loadMoreSearch() async {
+        guard searchHasMore, !isSearching, let client else { return }
+        let q = searchQuery.trimmingCharacters(in: .whitespaces)
+        isSearching = true
+        defer { isSearching = false }
+        do {
+            let page = try await client.search(query: q, page: searchPage + 1, pageSize: searchPageSize)
+            guard q == searchQuery.trimmingCharacters(in: .whitespaces) else { return }
+            let known = Set(searchResults.map(\.id))
+            searchResults += page.items.filter { !known.contains($0.id) }
+            searchHasMore = page.hasMore; searchPage += 1
+        } catch let e as LookiError { searchError = e }
+        catch { searchError = .network(error.localizedDescription) }
+    }
+
+    func clearSearch() {
+        searchQuery = ""; searchResults = []; searchHasMore = false; searchError = nil; searchPage = 0
+    }
+
+    // MARK: Archive
+
+    struct ArchiveProgress: Equatable {
+        var total = 0
+        var done = 0
+        var skipped = 0
+        var lastMessage = ""
+        var folder: URL?
+        var finished = false
+        var error: String?
+    }
+
+    private(set) var archiveProgress: ArchiveProgress?
+    private var archiveTask: Task<Void, Never>?
+    var isArchiving: Bool { archiveProgress != nil && archiveProgress?.finished == false && archiveProgress?.error == nil }
+
+    func archiveSelectedDay() {
+        guard let client, let root = archiveRoot else {
+            let text = archiveRoot == nil ? "Choisis d'abord un dossier d'archive dans les Réglages." : LookiError.missingAPIKey.userMessage
+            banner = Banner(text: text, isError: true, showsSettings: true)
+            return
+        }
+        let moments = dayState.moments
+        guard !moments.isEmpty else {
+            banner = Banner(text: "Rien à archiver pour ce jour.", isError: false, showsSettings: false)
+            return
+        }
+        let day = selectedDay
+        archiveProgress = ArchiveProgress(total: moments.count)
+        archiveTask = Task {
+            let archiver = DayArchiver(client: client)
+            // Keep the security scope open for the whole run.
+            let ok = root.startAccessingSecurityScopedResource()
+            defer { if ok { root.stopAccessingSecurityScopedResource() } }
+            do {
+                for try await event in archiver.archive(day: day, moments: moments, into: root) {
+                    switch event {
+                    case .started(let total): archiveProgress?.total = total
+                    case .downloaded(_, let name): archiveProgress?.done += 1; archiveProgress?.lastMessage = name
+                    case .skipped(_, let reason): archiveProgress?.done += 1; archiveProgress?.skipped += 1; archiveProgress?.lastMessage = reason
+                    case .wroteJournal: archiveProgress?.lastMessage = "journal.md"
+                    case .finished(let folder): archiveProgress?.folder = folder; archiveProgress?.finished = true
+                    }
+                }
+            } catch is CancellationError {
+                archiveProgress = nil
+            } catch {
+                archiveProgress?.error = (error as? LookiError)?.userMessage ?? error.localizedDescription
+            }
+        }
+    }
+
+    func cancelArchive() { archiveTask?.cancel(); archiveProgress = nil }
+    func dismissArchiveProgress() { archiveProgress = nil }
+
+    func archivedFolder(for day: DayKey) -> URL? {
+        guard let root = archiveRoot else { return nil }
+        let folder = DayArchiver.folder(for: day, in: root)
+        let exists = (try? ArchiveFolderBookmark.withAccess(root) { _ in
+            FileManager.default.fileExists(atPath: folder.appending(path: "journal.md").path())
+        }) ?? false
+        return exists ? folder : nil
+    }
+
+    func openArchiveRoot() {
+        guard let root = archiveRoot else { return }
+        _ = try? ArchiveFolderBookmark.withAccess(root) { NSWorkspace.shared.open($0) }
+    }
+
+    func reveal(_ url: URL) {
+        guard let root = archiveRoot else { return }
+        _ = try? ArchiveFolderBookmark.withAccess(root) { _ in NSWorkspace.shared.activateFileViewerSelecting([url]) }
     }
 }

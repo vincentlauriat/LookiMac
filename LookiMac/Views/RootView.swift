@@ -11,10 +11,33 @@ struct RootView: View {
             CalendarSidebarView()
                 .navigationSplitViewColumnWidth(min: 260, ideal: 280, max: 320)
         } content: {
-            DayTimelineView()
-                .navigationSplitViewColumnWidth(min: 360, ideal: 420)
+            Group {
+                if model.isSearchMode { SearchResultsView() } else { DayTimelineView() }
+            }
+            .navigationSplitViewColumnWidth(min: 360, ideal: 420)
         } detail: {
-            EmptyStateView(title: "Sélectionne un moment", systemImage: "photo.on.rectangle")
+            if let m = model.selectedMoment {
+                MomentDetailView(moment: m)
+            } else {
+                EmptyStateView(title: "Sélectionne un moment", systemImage: "photo.on.rectangle")
+            }
+        }
+        .searchable(text: $model.searchQuery, placement: .toolbar, prompt: "Rechercher un souvenir…")
+        .onSubmit(of: .search) { Task { await model.runSearch() } }
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    model.archiveSelectedDay()
+                } label: { Label("Archiver ce jour", systemImage: "arrow.down.doc") }
+                .disabled(model.isSearchMode || model.dayState.moments.isEmpty || model.isArchiving)
+                .help("Télécharge les médias du jour et écrit journal.md dans le dossier d'archive")
+
+                Button { model.openArchiveRoot() } label: { Label("Dossier d'archive", systemImage: "folder") }
+                    .disabled(model.archiveRoot == nil)
+            }
+        }
+        .sheet(isPresented: Binding(get: { model.archiveProgress != nil }, set: { if !$0 { model.dismissArchiveProgress() } })) {
+            ArchiveProgressView().environment(model)
         }
         .safeAreaInset(edge: .top) {
             if let banner = model.banner {
