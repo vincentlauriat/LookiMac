@@ -31,4 +31,30 @@ final class AppModel {
         apiKey = nil
         client = nil
     }
+
+    // MARK: Archive folder, connection test, cache
+
+    private(set) var archiveRoot: URL? = ArchiveFolderBookmark.load()
+    private(set) var cacheSize: Int64 = 0
+
+    func chooseArchiveFolder(_ url: URL) throws {
+        try ArchiveFolderBookmark.save(url)
+        archiveRoot = url
+    }
+
+    func testConnection() async -> Result<UserProfile, LookiError> {
+        guard let client else { return .failure(.missingAPIKey) }
+        do { return .success(try await client.me()) }
+        catch let e as LookiError { return .failure(e) }
+        catch { return .failure(.network(error.localizedDescription)) }
+    }
+
+    func refreshCacheSize() async {
+        cacheSize = await cache.sizeOnDisk()
+    }
+
+    func purgeCache() async throws {
+        try await cache.purge()
+        await refreshCacheSize()
+    }
 }
