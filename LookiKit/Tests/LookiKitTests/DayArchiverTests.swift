@@ -106,6 +106,35 @@ import Foundation
         #expect(events.contains(.skipped(momentID: moments[0].id, reason: "Looki : not found")))
         #expect(events.last == .finished(folder: root.appending(path: "2026/09/05")))
     }
+    @Test func archivesJournalMediaAndJson() async throws {
+        let root = try tempRoot()
+        let moments = try fixtureMoments()
+        let days = try #require(try LookiJSON.decoder().decode(Envelope<JournalPage>.self, from: Fixture.data("journals")).data).items
+        let posts = days[1].journals    // comic(image), vlog(video+thumb), health(none), system(image)
+        let day = DayKey(year: 2026, month: 9, day: 4)
+        let archiver = DayArchiver(
+            fetchDetail: { id in moments.first { $0.id == id }! },
+            fetchJournalDetail: { id in posts.first { $0.id == id }! },
+            downloader: FakeDownloader()
+        )
+        let events = try await collect(archiver.archive(day: day, moments: [], journals: posts, into: root))
+        let folder = root.appending(path: "2026/09/04/journal")
+        #expect(DayArchiver.journalFileName(for: posts[0]) == "comic_page-2345-j0000000.jpg")
+        #expect(DayArchiver.journalFileName(for: posts[1]) == "daily_vlog-2340-j0000000.mp4")
+        #expect(events.contains(.downloaded(momentID: posts[0].id, fileName: "journal/comic_page-2345-j0000000.jpg")))
+        #expect(events.contains(.downloaded(momentID: posts[1].id, fileName: "journal/daily_vlog-2340-j0000000.mp4")))
+        #expect(events.contains(.skipped(momentID: posts[2].id, reason: "aucun média")))
+        #expect(!events.contains { if case .downloaded(let id, _) = $0 { return id == posts[3].id } else { return false } })
+        let files = try FileManager.default.contentsOfDirectory(atPath: folder.path())
+        #expect(Set(files) == ["comic_page-2345-j0000000.jpg", "daily_vlog-2340-j0000000.mp4"])
+        let raw = try Data(contentsOf: root.appending(path: "2026/09/04/journals.json"))
+        let back = try LookiJSON.decoder().decode([JournalPost].self, from: raw)
+        #expect(back.count == 3)
+        #expect(back.allSatisfy { $0.mediaItems.allSatisfy { $0.source.temporaryURL == nil } })
+        let journal = try String(contentsOf: root.appending(path: "2026/09/04/journal.md"), encoding: .utf8)
+        #expect(journal.contains("## Journal Looki"))
+        #expect(events.first == .started(total: 3))
+    }
 }
 
 actor Counter {
