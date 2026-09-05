@@ -1,0 +1,23 @@
+# Changelog
+
+All notable changes to Looki pour Mac are documented here. Format based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow SemVer.
+
+## [0.1.0] — 2026-09-05
+
+First public release.
+
+### Added
+- Month calendar with marked days, day timeline with thumbnails extracted from each clip.
+- Moment detail: native video/photo playback, AI description, address, duration.
+- Semantic search across all moments, paginated.
+- "Archive this day": one media file per moment, `journal.md` and `moments.json` in `YYYY/MM/DD/` under a folder you choose.
+- Settings: API key in the Keychain, connection test, archive folder, cache purge, import from `~/.config/looki/credentials.json`.
+- `LookiKit` Swift package (API client, models, cache, Markdown journal, archiver) with 39 unit tests.
+- Signed and notarized DMG via `Scripts/release.sh`; trilingual landing page on GitHub Pages.
+
+### Known limitations
+- The Looki Open API exposes one cover media per moment and is read-only; the app cannot trigger captures or change device settings.
+- No app icon yet; no auto-update.
+
+[0.1.0]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.1.0
