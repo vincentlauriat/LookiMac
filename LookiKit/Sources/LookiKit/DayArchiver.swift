@@ -28,6 +28,8 @@ public enum ArchiveEvent: Sendable, Equatable {
     case skipped(momentID: String, reason: String)
     case wroteJournal(URL)
     case finished(folder: URL)
+    /// More files were discovered than the initial `started(total:)` count.
+    case expanded(additional: Int)
 }
 
 /// Archives one day: `<root>/YYYY/MM/DD/{HHmm-<id8>.<ext>, journal.md, moments.json}`.
@@ -36,23 +38,40 @@ public struct DayArchiver: Sendable {
     public typealias DetailFetcher = @Sendable (String) async throws -> Moment
 
     public typealias JournalFetcher = @Sendable (String) async throws -> JournalPost
+    public typealias FilesFetcher = @Sendable (String) async throws -> [MomentFile]
 
     private let fetchDetail: DetailFetcher
     private let fetchJournalDetail: JournalFetcher
+    private let fetchFiles: FilesFetcher
     private let downloader: MediaDownloader
 
     public init(fetchDetail: @escaping DetailFetcher,
                 fetchJournalDetail: @escaping JournalFetcher = { _ in throw LookiError.api(code: 0, detail: "no journal fetcher") },
+                fetchFiles: @escaping FilesFetcher = { _ in [] },
                 downloader: MediaDownloader) {
         self.fetchDetail = fetchDetail
         self.fetchJournalDetail = fetchJournalDetail
+        self.fetchFiles = fetchFiles
         self.downloader = downloader
     }
 
     public init(client: LookiClient, downloader: MediaDownloader = URLSessionDownloader()) {
         self.init(fetchDetail: { id in try await client.moment(id: id) },
                   fetchJournalDetail: { id in try await client.journal(id: id) },
+                  fetchFiles: { id in try await client.allMomentFiles(id: id) },
                   downloader: downloader)
+    }
+
+    /// `HHmm-<id8>`: one sub-folder per moment holding all its clips.
+    public static func momentFolderName(for moment: Moment) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX"); f.timeZone = moment.timeZone; f.dateFormat = "HHmm"
+        return "\(f.string(from: moment.startTime))-\(moment.id.prefix(8))"
+    }
+
+    /// `001-<fileid8>.<ext>` inside the moment folder.
+    public static func clipFileName(index: Int, file: MomentFile) -> String {
+        "\(String(format: "%03d", index))-\(file.id.prefix(8)).\(file.file.mediaType.fileExtension)"
     }
 
     public static func journalFileName(for post: JournalPost) -> String {
@@ -86,27 +105,57 @@ public struct DayArchiver: Sendable {
 
                     for m in moments {
                         try Task.checkCancellation()
-                        guard m.coverFile != nil else {
-                            continuation.yield(.skipped(momentID: m.id, reason: "aucun média")); continue
+                        let subfolder = folder.appending(path: Self.momentFolderName(for: m))
+                        // 1. All clips when the API lists them; 2. fallback to the cover.
+                        var files: [MomentFile] = []
+                        do { files = try await fetchFiles(m.id) } catch is CancellationError { throw CancellationError() } catch { files = [] }
+                        if files.count > 1 { continuation.yield(.expanded(additional: files.count - 1)) }
+                        if files.isEmpty {
+                            guard m.coverFile != nil else {
+                                continuation.yield(.skipped(momentID: m.id, reason: "aucun média")); continue
+                            }
+                            let name = Self.fileName(for: m)
+                            let dest = subfolder.appending(path: name)
+                            if let size = try? fm.attributesOfItem(atPath: dest.path())[.size] as? Int, size > 0 {
+                                continuation.yield(.skipped(momentID: m.id, reason: "déjà archivé")); continue
+                            }
+                            do {
+                                let fresh = try await fetchDetail(m.id)
+                                guard let url = fresh.coverFile?.file.temporaryURL else {
+                                    continuation.yield(.skipped(momentID: m.id, reason: "URL absente")); continue
+                                }
+                                try await downloader.download(url, to: dest)
+                                continuation.yield(.downloaded(momentID: m.id, fileName: "\(Self.momentFolderName(for: m))/\(name)"))
+                            } catch let e as LookiError {
+                                continuation.yield(.skipped(momentID: m.id, reason: e.userMessage))
+                            } catch is CancellationError {
+                                throw CancellationError()
+                            } catch {
+                                continuation.yield(.skipped(momentID: m.id, reason: error.localizedDescription))
+                            }
+                            continue
                         }
-                        let name = Self.fileName(for: m)
-                        let dest = folder.appending(path: name)
-                        if let size = try? fm.attributesOfItem(atPath: dest.path())[.size] as? Int, size > 0 {
-                            continuation.yield(.skipped(momentID: m.id, reason: "déjà archivé")); continue
-                        }
-                        do {
-                            let fresh = try await fetchDetail(m.id)
-                            guard let url = fresh.coverFile?.file.temporaryURL else {
+                        for (i, file) in files.enumerated() {
+                            try Task.checkCancellation()
+                            let name = Self.clipFileName(index: i + 1, file: file)
+                            let dest = subfolder.appending(path: name)
+                            let rel = "\(Self.momentFolderName(for: m))/\(name)"
+                            if let size = try? fm.attributesOfItem(atPath: dest.path())[.size] as? Int, size > 0 {
+                                continuation.yield(.skipped(momentID: m.id, reason: "déjà archivé")); continue
+                            }
+                            guard let url = file.file.temporaryURL else {
                                 continuation.yield(.skipped(momentID: m.id, reason: "URL absente")); continue
                             }
-                            try await downloader.download(url, to: dest)
-                            continuation.yield(.downloaded(momentID: m.id, fileName: name))
-                        } catch let e as LookiError {
-                            continuation.yield(.skipped(momentID: m.id, reason: e.userMessage))
-                        } catch is CancellationError {
-                            throw CancellationError()
-                        } catch {
-                            continuation.yield(.skipped(momentID: m.id, reason: error.localizedDescription))
+                            do {
+                                try await downloader.download(url, to: dest)
+                                continuation.yield(.downloaded(momentID: m.id, fileName: rel))
+                            } catch let e as LookiError {
+                                continuation.yield(.skipped(momentID: m.id, reason: e.userMessage))
+                            } catch is CancellationError {
+                                throw CancellationError()
+                            } catch {
+                                continuation.yield(.skipped(momentID: m.id, reason: error.localizedDescription))
+                            }
                         }
                     }
 

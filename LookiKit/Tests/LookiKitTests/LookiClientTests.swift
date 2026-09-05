@@ -99,22 +99,67 @@ import Foundation
         catch let e as LookiError { if case .decoding = e {} else { Issue.record("wrong error \(e)") } }
     }
 
-    @Test func journalsFirstPageHasNoCursorParam() async throws {
+    @Test func journalsFirstPageSendsMaxDaysOnly() async throws {
         let client = makeClient()
         StubURLProtocol.enqueue(path: "/api/v1/journals", body: try Fixture.data("journals"))
         let page = try await client.journals()
         #expect(page.items.count == 2)
         let url = try #require(StubURLProtocol.requests.first?.url)
-        #expect(url.query() == nil)
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(items == [URLQueryItem(name: "max_days", value: "31")])
     }
 
-    @Test func journalsNextPageSendsCursorId() async throws {
+    @Test func journalsNextPageSendsCursorDate() async throws {
         let client = makeClient()
         StubURLProtocol.enqueue(path: "/api/v1/journals", body: try Fixture.data("journals"))
-        _ = try await client.journals(cursor: "2026-09-04")
+        _ = try await client.journals(cursorDate: "2026-09-04", maxDays: 7)
         let url = try #require(StubURLProtocol.requests.first?.url)
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-        #expect(items.contains(URLQueryItem(name: "cursor_id", value: "2026-09-04")))
+        #expect(items.contains(URLQueryItem(name: "cursor_date", value: "2026-09-04")))
+        #expect(items.contains(URLQueryItem(name: "max_days", value: "7")))
+        #expect(!items.contains { $0.name == "cursor_id" })
+    }
+
+    @Test func momentFilesPagesThroughAllClips() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/moments/m1/files", body: try Fixture.data("moment-files"))
+        StubURLProtocol.enqueue(path: "/api/v1/moments/m1/files", body: try Fixture.data("moment-files-2"))
+        let files = try await client.allMomentFiles(id: "m1")
+        #expect(files.map(\.id) == ["f10000000000000000000001", "f10000000000000000000002", "f10000000000000000000003"])
+        #expect(files[0].thumbnail?.mediaType == .image)
+        #expect(files[1].thumbnail == nil)
+        #expect(StubURLProtocol.requests.count == 2)
+        let second = URLComponents(url: StubURLProtocol.requests[1].url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(second.contains(URLQueryItem(name: "cursor_id", value: "f10000000000000000000002")))
+        #expect(second.contains(URLQueryItem(name: "limit", value: "100")))
+    }
+
+    @Test func momentFilesHighlightParam() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/moments/m1/files", body: try Fixture.data("moment-files-2"))
+        _ = try await client.momentFiles(id: "m1", highlight: true, limit: 20)
+        let items = URLComponents(url: StubURLProtocol.requests[0].url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(items.contains(URLQueryItem(name: "highlight", value: "true")))
+        #expect(items.contains(URLQueryItem(name: "limit", value: "20")))
+    }
+
+    @Test func momentCalendarDecodesHighlights() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/moments/calendar", body: try Fixture.data("moments-calendar"))
+        let days = try await client.momentCalendar(start: DayKey(year: 2026, month: 9, day: 1), end: DayKey(year: 2026, month: 9, day: 30))
+        #expect(days.map(\.date.string) == ["2026-09-04", "2026-09-05"])
+        #expect(days[0].highlightMoment?.title == "Lunettes connectées à l'IFA")
+        #expect(days[1].highlightMoment == nil)
+        let items = URLComponents(url: StubURLProtocol.requests[0].url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        #expect(items.contains(URLQueryItem(name: "start_date", value: "2026-09-01")))
+        #expect(items.contains(URLQueryItem(name: "end_date", value: "2026-09-30")))
+    }
+
+    @Test func journalCalendarDecodes() async throws {
+        let client = makeClient()
+        StubURLProtocol.enqueue(path: "/api/v1/journals/calendar", body: try Fixture.data("journals-calendar"))
+        let days = try await client.journalCalendar(start: DayKey(year: 2026, month: 9, day: 1), end: DayKey(year: 2026, month: 9, day: 30))
+        #expect(days.map(\.date.string) == ["2026-09-04", "2026-09-05"])
     }
 
     @Test func journalDetail() async throws {

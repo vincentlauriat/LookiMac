@@ -42,11 +42,48 @@ public actor LookiClient {
         ], as: SearchPage.self)
     }
 
-    /// Journal feed, newest day first. Pass `nextCursorId` from the previous page to continue.
-    public func journals(cursor: String? = nil) async throws -> JournalPage {
-        var query: [URLQueryItem] = []
-        if let cursor { query.append(URLQueryItem(name: "cursor_id", value: cursor)) }
+    /// Journal feed, newest day first. Pass `nextCursorId` (a date) from the previous page as `cursorDate`.
+    public func journals(cursorDate: String? = nil, maxDays: Int = 31) async throws -> JournalPage {
+        var query = [URLQueryItem(name: "max_days", value: String(min(max(maxDays, 1), 31)))]
+        if let cursorDate { query.append(URLQueryItem(name: "cursor_date", value: cursorDate)) }
         return try await get("journals", query: query, as: JournalPage.self)
+    }
+
+    /// Days that have journal posts in the range (inclusive).
+    public func journalCalendar(start: DayKey, end: DayKey) async throws -> [JournalCalendarDay] {
+        try await get("journals/calendar", query: [
+            URLQueryItem(name: "start_date", value: start.string),
+            URLQueryItem(name: "end_date", value: end.string),
+        ], as: [JournalCalendarDay].self)
+    }
+
+    /// Days that have moments in the range (inclusive), each with its highlight moment.
+    public func momentCalendar(start: DayKey, end: DayKey) async throws -> [CalendarDay] {
+        try await get("moments/calendar", query: [
+            URLQueryItem(name: "start_date", value: start.string),
+            URLQueryItem(name: "end_date", value: end.string),
+        ], as: [CalendarDay].self)
+    }
+
+    /// One page of the clips (photos/videos) of a moment.
+    public func momentFiles(id: String, highlight: Bool? = nil, cursor: String? = nil, limit: Int = 100) async throws -> FilesPage {
+        var query = [URLQueryItem(name: "limit", value: String(min(max(limit, 1), 100)))]
+        if let highlight { query.append(URLQueryItem(name: "highlight", value: highlight ? "true" : "false")) }
+        if let cursor { query.append(URLQueryItem(name: "cursor_id", value: cursor)) }
+        return try await get("moments/\(id)/files", query: query, as: FilesPage.self)
+    }
+
+    /// Every clip of a moment, following the cursor (at most 10 pages of 100).
+    public func allMomentFiles(id: String, highlight: Bool? = nil) async throws -> [MomentFile] {
+        var all: [MomentFile] = []
+        var cursor: String? = nil
+        for _ in 0..<10 {
+            let page = try await momentFiles(id: id, highlight: highlight, cursor: cursor)
+            all += page.items
+            guard page.hasMore, let next = page.nextCursorId, next != cursor else { break }
+            cursor = next
+        }
+        return all.sorted { $0.createdAt < $1.createdAt }
     }
 
     public func journal(id: String) async throws -> JournalPost {

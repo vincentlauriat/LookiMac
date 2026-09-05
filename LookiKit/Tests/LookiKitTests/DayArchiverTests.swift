@@ -47,12 +47,12 @@ import Foundation
         let folder = root.appending(path: "2026/09/05")
 
         #expect(events.first == .started(total: 2))
-        #expect(events.contains(.downloaded(momentID: moments[0].id, fileName: "0959-aaaaaaaa.mp4")))
-        #expect(events.contains(.downloaded(momentID: moments[1].id, fileName: "1235-aaaaaaaa.jpg")))
+        #expect(events.contains(.downloaded(momentID: moments[0].id, fileName: "0959-aaaaaaaa/0959-aaaaaaaa.mp4")))
+        #expect(events.contains(.downloaded(momentID: moments[1].id, fileName: "1235-aaaaaaaa/1235-aaaaaaaa.jpg")))
         #expect(events.last == .finished(folder: folder))
 
         // The video was fetched through the FRESH detail URL, not the stale list URL.
-        let body = try String(contentsOf: folder.appending(path: "0959-aaaaaaaa.mp4"), encoding: .utf8)
+        let body = try String(contentsOf: folder.appending(path: "0959-aaaaaaaa/0959-aaaaaaaa.mp4"), encoding: .utf8)
         #expect(body.contains("FRESH1"))
 
         let journal = try String(contentsOf: folder.appending(path: "journal.md"), encoding: .utf8)
@@ -67,7 +67,7 @@ import Foundation
     @Test func skipsExistingNonEmptyFiles() async throws {
         let root = try tempRoot()
         let moments = try fixtureMoments()
-        let folder = DayArchiver.folder(for: moments[0].date, in: root)
+        let folder = DayArchiver.folder(for: moments[0].date, in: root).appending(path: "0959-aaaaaaaa")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data("already".utf8).write(to: folder.appending(path: "0959-aaaaaaaa.mp4"))
         let counter = Counter()
@@ -89,7 +89,32 @@ import Foundation
         let archiver = DayArchiver(fetchDetail: { id in snapshot.first { $0.id == id }! }, downloader: FakeDownloader())
         let events = try await collect(archiver.archive(day: moments[0].date, moments: moments, into: root))
         #expect(events.contains(.skipped(momentID: moments[0].id, reason: "aucun média")))
-        #expect(events.contains(.downloaded(momentID: moments[1].id, fileName: "1235-aaaaaaaa.jpg")))
+        #expect(events.contains(.downloaded(momentID: moments[1].id, fileName: "1235-aaaaaaaa/1235-aaaaaaaa.jpg")))
+    }
+
+    @Test func downloadsEveryClipIntoTheMomentFolder() async throws {
+        let root = try tempRoot()
+        let moments = try fixtureMoments()
+        let p1 = try #require(try LookiJSON.decoder().decode(Envelope<FilesPage>.self, from: Fixture.data("moment-files")).data)
+        let p2 = try #require(try LookiJSON.decoder().decode(Envelope<FilesPage>.self, from: Fixture.data("moment-files-2")).data)
+        let clips = p1.items + p2.items
+        let archiver = DayArchiver(
+            fetchDetail: { id in moments.first { $0.id == id }! },
+            fetchFiles: { id in id == moments[0].id ? clips : [] },
+            downloader: FakeDownloader()
+        )
+        let events = try await collect(archiver.archive(day: moments[0].date, moments: moments, into: root))
+        let day = root.appending(path: "2026/09/05")
+        #expect(events.first == .started(total: 2))
+        #expect(events.contains(.expanded(additional: 2)))          // 3 clips → 2 more than the moment itself
+        #expect(events.contains(.downloaded(momentID: moments[0].id, fileName: "0959-aaaaaaaa/001-f1000000.mp4")))
+        #expect(events.contains(.downloaded(momentID: moments[0].id, fileName: "0959-aaaaaaaa/002-f1000000.mp4")))
+        #expect(events.contains(.downloaded(momentID: moments[0].id, fileName: "0959-aaaaaaaa/003-f1000000.jpg")))
+        let files = try FileManager.default.contentsOfDirectory(atPath: day.appending(path: "0959-aaaaaaaa").path())
+        #expect(Set(files) == ["001-f1000000.mp4", "002-f1000000.mp4", "003-f1000000.jpg"])
+        #expect(try String(contentsOf: day.appending(path: "0959-aaaaaaaa/001-f1000000.mp4"), encoding: .utf8).contains("CLIP1"))
+        // Second moment had no clip listing → cover fallback in its own folder.
+        #expect(events.contains(.downloaded(momentID: moments[1].id, fileName: "1235-aaaaaaaa/1235-aaaaaaaa.jpg")))
     }
 
     @Test func detailFailureIsReportedAsSkippedAndArchiveContinues() async throws {

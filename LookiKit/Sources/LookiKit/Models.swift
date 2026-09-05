@@ -72,12 +72,14 @@ public struct RemoteFile: Codable, Sendable, Equatable, Hashable {
     public var temporaryURL: URL?
     public let mediaType: MediaType
     public let metadata: FileMetadata?
+    /// Size in bytes when the API provides it.
+    public let size: Int?
 
     // With .convertFromSnakeCase, "temporary_url" arrives as "temporaryUrl".
-    private enum CodingKeys: String, CodingKey { case temporaryURL = "temporaryUrl", mediaType, metadata }
+    private enum CodingKeys: String, CodingKey { case temporaryURL = "temporaryUrl", mediaType, metadata, size }
 
-    public init(temporaryURL: URL?, mediaType: MediaType, metadata: FileMetadata?) {
-        self.temporaryURL = temporaryURL; self.mediaType = mediaType; self.metadata = metadata
+    public init(temporaryURL: URL?, mediaType: MediaType, metadata: FileMetadata?, size: Int? = nil) {
+        self.temporaryURL = temporaryURL; self.mediaType = mediaType; self.metadata = metadata; self.size = size
     }
 
     public init(from decoder: Decoder) throws {
@@ -90,6 +92,7 @@ public struct RemoteFile: Codable, Sendable, Equatable, Hashable {
         }
         mediaType = try c.decodeIfPresent(MediaType.self, forKey: .mediaType) ?? .unknown
         metadata = try c.decodeIfPresent(FileMetadata.self, forKey: .metadata)
+        size = try c.decodeIfPresent(Int.self, forKey: .size)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -97,6 +100,7 @@ public struct RemoteFile: Codable, Sendable, Equatable, Hashable {
         try c.encodeIfPresent(temporaryURL?.absoluteString, forKey: .temporaryURL)
         try c.encode(mediaType, forKey: .mediaType)
         try c.encodeIfPresent(metadata, forKey: .metadata)
+        try c.encodeIfPresent(size, forKey: .size)
     }
 }
 
@@ -125,23 +129,26 @@ public struct Location: Codable, Sendable, Equatable, Hashable {
     }
 }
 
-public struct MomentFile: Codable, Sendable, Equatable, Hashable {
+public struct MomentFile: Codable, Sendable, Equatable, Hashable, Identifiable {
     public let id: String
     public var file: RemoteFile
+    /// Small preview when the API provides one (clip listings); `nil` on cover files.
+    public var thumbnail: RemoteFile?
     public let location: Location?
     public let createdAt: Date
     public let tz: String
 
-    private enum CodingKeys: String, CodingKey { case id, file, location, createdAt, tz }
+    private enum CodingKeys: String, CodingKey { case id, file, thumbnail, location, createdAt, tz }
 
-    public init(id: String, file: RemoteFile, location: Location?, createdAt: Date, tz: String) {
-        self.id = id; self.file = file; self.location = location; self.createdAt = createdAt; self.tz = tz
+    public init(id: String, file: RemoteFile, thumbnail: RemoteFile? = nil, location: Location?, createdAt: Date, tz: String) {
+        self.id = id; self.file = file; self.thumbnail = thumbnail; self.location = location; self.createdAt = createdAt; self.tz = tz
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         file = try c.decode(RemoteFile.self, forKey: .file)
+        thumbnail = try c.decodeIfPresent(RemoteFile.self, forKey: .thumbnail)
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         tz = try c.decodeIfPresent(String.self, forKey: .tz) ?? "+00:00"
         // Accept both the API form (string) and our own re-encoded form (object).
@@ -156,6 +163,7 @@ public struct MomentFile: Codable, Sendable, Equatable, Hashable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(file, forKey: .file)
+        try c.encodeIfPresent(thumbnail, forKey: .thumbnail)
         try c.encodeIfPresent(location, forKey: .location)
         try c.encode(createdAt, forKey: .createdAt)
         try c.encode(tz, forKey: .tz)
@@ -187,6 +195,7 @@ public struct Moment: Codable, Sendable, Equatable, Hashable, Identifiable {
     public func strippingSignedURLs() -> Moment {
         var copy = self
         copy.coverFile?.file.temporaryURL = nil
+        copy.coverFile?.thumbnail?.temporaryURL = nil
         return copy
     }
 }
@@ -194,4 +203,32 @@ public struct Moment: Codable, Sendable, Equatable, Hashable, Identifiable {
 public struct SearchPage: Decodable, Sendable {
     public let items: [Moment]
     public let hasMore: Bool
+}
+
+/// One page of `GET /moments/{id}/files`.
+public struct FilesPage: Decodable, Sendable {
+    public let items: [MomentFile]
+    public let nextCursorId: String?
+    public let hasMore: Bool
+}
+
+/// Compact moment as returned by `GET /moments/calendar` (no cover file).
+public struct MomentSummary: Codable, Sendable, Equatable, Hashable, Identifiable {
+    public let id: String
+    public let title: String
+    public let description: String
+    public let mediaTypes: [MediaType]
+    public let date: DayKey
+    public let tz: String
+    public let startTime: Date
+    public let endTime: Date
+}
+
+public struct CalendarDay: Decodable, Sendable, Equatable {
+    public let date: DayKey
+    public let highlightMoment: MomentSummary?
+}
+
+public struct JournalCalendarDay: Decodable, Sendable, Equatable {
+    public let date: DayKey
 }
