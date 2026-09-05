@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var testing = false
 
     var body: some View {
+        @Bindable var model = model
         Form {
             Section("Compte Looki") {
                 SecureField("Clé API (lk-…)", text: $keyField)
@@ -38,6 +39,12 @@ struct SettingsView: View {
                 }
                 Button("Choisir le dossier…") { chooseFolder() }
                 Text("Chaque jour archivé produit un sous-dossier AAAA/MM/JJ avec les médias, journal.md et moments.json.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+
+            Section("Journal") {
+                Toggle("Afficher les annonces Looki", isOn: $model.showSystemPosts)
+                Text("Les posts « Looki » sont des messages de l'éditeur, pas du contenu tiré de tes journées. Ils ne sont jamais archivés.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 
