@@ -1,7 +1,7 @@
 # Looki pour Mac
 
 ![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-blue)
-![Tests](https://img.shields.io/badge/tests-39%2F39-brightgreen)
+![Tests](https://img.shields.io/badge/tests-53%2F53-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 Application macOS native (SwiftUI) pour revoir, rechercher et archiver les
@@ -17,6 +17,7 @@ transparence — pas un produit avec support.
 | **Journée** | Timeline des moments : heure, titre, lieu, vignette, type de média. |
 | **Détail** | Lecture de la vidéo ou de la photo du moment, description complète, adresse. |
 | **Recherche** | Recherche sémantique dans tous les souvenirs, avec pagination. |
+| **Journal** | Fil des posts générés par Looki (journal, BD, vlog, santé, récap) groupés par jour, rendu Markdown natif, inclus dans l'archive. |
 | **Archive** | « Archiver ce jour » télécharge les médias et écrit `journal.md` + `moments.json` dans `AAAA/MM/JJ/`. |
 | **Réglages** | Clé API dans le trousseau, test de connexion, dossier d'archive, purge du cache. |
 
@@ -66,6 +67,7 @@ de médias qu'il renvoie.
 ## Roadmap
 
 - [x] v0.1 — calendrier, timeline, détail, recherche, archive, DMG signé
+- [x] v0.2 — Journal (posts générés par Looki), correctif du lecteur vidéo
 - [ ] Mises à jour Sparkle
 - [ ] Cible CLI réutilisant LookiKit
 - [ ] Index local pour recherche hors ligne

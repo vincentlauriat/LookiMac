@@ -5,6 +5,13 @@ All notable changes to Looki pour Mac are documented here. Format based on
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-05
+
+### Added
+- **Journal**: the Looki feed of AI-generated posts (diary captions with image, comic page, daily vlog, health report, yesterday's recap) as a `Moments | Journal` sidebar mode — day-grouped feed, post detail with native Markdown rendering, Looki announcements hidden by default (Settings toggle).
+- "Archiver ce jour" also saves the day's journal media into `journal/`, writes `journals.json`, and appends a `## Journal Looki` section to `journal.md`.
+- `LookiKit`: `JournalPost` models, `journals` endpoints, per-day journal cache, `MarkdownBlocks` parser. 53 unit tests.
+
 ### Fixed
 - Crash when opening a video moment (`failed to demangle superclass of VideoPlayerView`): with Xcode 27 the `import AVKit` autolink only pulls the `_AVKit_SwiftUI` overlay, so `AVKit.framework` is now linked explicitly. Affects 0.1.0 and 0.1.1.
 
@@ -30,6 +37,7 @@ First public release.
 - The Looki Open API exposes one cover media per moment and is read-only; the app cannot trigger captures or change device settings.
 - No app icon yet; no auto-update.
 
-[Unreleased]: https://github.com/vincentlauriat/LookiMac/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/vincentlauriat/LookiMac/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.2.0
 [0.1.1]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.1.1
 [0.1.0]: https://github.com/vincentlauriat/LookiMac/releases/tag/v0.1.0
